@@ -20,7 +20,7 @@ export default function ScriptPage() {
   ];
 
   return (
-    <div className="p-8 text-black bg-white rounded-lg shadow-md">
+    <div className="p-8 text-black bg-white ml-64">
       <h1 className="text-2xl font-bold mb-2">
         Soạn kịch bản & Chọn giọng đọc
       </h1>
