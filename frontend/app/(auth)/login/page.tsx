@@ -1,10 +1,41 @@
+"use client";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Video } from "lucide-react";
+import { useState } from "react";
+import { LogInApi } from "@/services/user_api";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
+  const router = useRouter();
+
+  const [loginRequest, setLoginRequest] = useState({
+    username: "",
+    password: "",
+  });
+
+  const HandleLogin = async () => {
+    console.log("Logging in with", loginRequest);
+
+    const response = await LogInApi(loginRequest);
+
+    if(response) {
+      if(response.status === "success") {
+        console.log("Login successful", response.message);
+        router.push("/");
+      }
+      else{
+        console.log("Login failed: ", response.message);
+      }
+    }
+    else {
+      console.log("Login failed");
+    }
+  };
+
+
   return (
     <div className="w-full max-w-md px-4">
       <Card className="w-full shadow-md bg-white">
@@ -31,6 +62,9 @@ export default function LoginPage() {
               Tên đăng nhập
             </label>
             <Input
+              type="text"
+              value={loginRequest.username}
+              onChange={(e) => setLoginRequest({ ...loginRequest, username: e.target.value })}
               id="username"
               placeholder="username"
               required
@@ -55,12 +89,16 @@ export default function LoginPage() {
             <Input
               id="password"
               type="password"
+              value={loginRequest.password}
+              onChange={(e) => setLoginRequest({ ...loginRequest, password: e.target.value })}
               placeholder="••••••••"
               required
               className="bg-white border-gray-300 text-black placeholder:text-gray-400 focus:placeholder-transparent"
             />
           </div>
-          <Button className="w-full mt-6 bg-purple-600 hover:bg-purple-700">
+          <Button
+            onClick={HandleLogin} 
+            className="w-full mt-6 bg-purple-600 hover:bg-purple-700">
             Đăng nhập
           </Button>
           <div className="text-center text-sm mt-4 text-gray-600">

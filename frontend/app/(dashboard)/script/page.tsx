@@ -6,6 +6,7 @@ import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Clock, Play, Volume2, ArrowRight } from "lucide-react";
+import { ScriptSuggestions } from "./components/script-suggestion";
 
 export default function ScriptPage() {
   const [selectedVoice, setSelectedVoice] = useState("minh-anh");
@@ -84,11 +85,8 @@ export default function ScriptPage() {
               </div>
             </TabsContent>
 
-            <TabsContent value="ai">
-              <div className="p-4 text-center text-gray-500">
-                Tính năng gợi ý AI sẽ giúp bạn tạo kịch bản dựa trên chủ đề bạn
-                cung cấp
-              </div>
+            <TabsContent value="ai" className="space-y-4">
+              <ScriptSuggestions />
             </TabsContent>
           </Tabs>
         </div>
