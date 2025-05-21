@@ -1,8 +1,9 @@
 "use client"
 
 import type React from "react"
-import { createContext, useContext, useState, useEffect } from "react"
+import { createContext, useContext, useState, useEffect, useRef } from "react"
 import { getVideoMetadata } from "@remotion/media-utils"
+import { PlayerRef } from '@remotion/player';
 
 export interface Position {
     x: number
@@ -53,6 +54,7 @@ export interface MusicAttachment {
     artist: string
     startTime: number
     endTime: number
+    publicId: string
   }
 
 
@@ -61,16 +63,21 @@ interface VideoContextType {
   setVideoData: React.Dispatch<React.SetStateAction<VideoData | null>>
   isLoading: boolean
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>
-
+  playerRef: React.RefObject<PlayerRef | null>;
+  seekTo: (time: number) => void;
   attachments: videoAttachments
   addTextAttachment: (text: TextAttachment) => void
   updateTextAttachment: (id: string, updates: Partial<TextAttachment>) => void
   addEmojiAttachment: (emoji: EmojiAttachment) => void
   updateEmojiAttachment: (id: string, updates: Partial<EmojiAttachment>) => void
   addMusicAttachment: (music: MusicAttachment) => void
+  updateMusicAttachment: (id: string, updates: Partial<MusicAttachment>) => void
   removeAttachment: (type: "texts" | "emojis" | "musics", id: string) => void
   updateAttachment: (type: "texts" | "emojis" | "musics", id: string, data: any) => void
   updateCurrentTime: (time: number) => void
+  selectedItem: { itemId: string; type: 'texts' | 'emojis' | 'musics' } | null;
+  setSelectedItem: React.Dispatch<React.SetStateAction<{ itemId: string; type: 'texts' | 'emojis' | 'musics' } | null>>;
+
 }
 
 const VideoContext = createContext<VideoContextType | undefined>(undefined)
@@ -84,6 +91,19 @@ export function VideoProvider(
         videoId: string;
       }
 ) {
+  const playerRef = useRef<PlayerRef>(null);
+  const seekTo = (time: number) => {
+        const frame = Math.floor(time * 30);
+        playerRef.current?.seekTo(frame);
+        updateCurrentTime(time); // nếu cần
+        };
+
+  const [selectedItem, setSelectedItem] = useState<{
+  itemId: string;
+  type: 'texts' | 'emojis' | 'musics';
+} | null>(null)
+
+
   const [videoData, setVideoData] = useState<VideoData | null>(null)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [attachments, setAttachments] = useState<videoAttachments>({
@@ -92,7 +112,7 @@ export function VideoProvider(
             id: "text-1",
             content: "Xin chào!",
             startTime: 1,
-            endTime: 4,
+            endTime: 20,
             position: { x: 50, y: 40 },
             style: {
                 fontSize: 40,
@@ -102,8 +122,8 @@ export function VideoProvider(
         {
             id: "text-2",
             content: "Chào mừng đến với Remotion!",
-            startTime: 5,
-            endTime: 8,
+            startTime: 10,
+            endTime: 30,
             position: { x: 50, y: 60 },
             style: {
               fontSize: 32,
@@ -116,16 +136,16 @@ export function VideoProvider(
         {
             id: "emoji-1",
             codepoint: "1f600", // 😀
-            startTime: 2,
-            endTime: 6,
+            startTime: 10,
+            endTime: 50,
             size: 64,
             position: { x: 20, y: 50 }
           },
           {
             id: "emoji-2",
             codepoint: "1f389", // 🎉
-            startTime: 6,
-            endTime: 9,
+            startTime: 10,
+            endTime: 50,
             size: 72,
             position: { x: 80, y: 30 }
           }
@@ -133,6 +153,7 @@ export function VideoProvider(
     musics: [
         {
             id: "music-1",
+            publicId: '1',
             title: 'name',
             artist: 'someone',
             startTime: 0,
@@ -213,6 +234,13 @@ export function VideoProvider(
         }))
       }
 
+      const updateMusicAttachment = (id: string, updates: Partial<MusicAttachment>) => {
+        setAttachments((prev) => ({
+          ...prev,
+          musics: prev.musics.map((music) => (music.id === id ? { ...music, ...updates } : music)),
+        }))
+    }
+
     const removeAttachment = (type: "texts" | "emojis" | "musics", id: string) => {
         setAttachments((prev) => ({
             ...prev,
@@ -248,7 +276,12 @@ export function VideoProvider(
         addMusicAttachment,
         removeAttachment,
         updateAttachment,
-        updateCurrentTime
+        updateCurrentTime,
+        playerRef,
+        seekTo,
+        selectedItem,
+        setSelectedItem,
+        updateMusicAttachment
   }
 
   return <VideoContext.Provider value={value}>{children}</VideoContext.Provider>

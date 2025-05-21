@@ -11,40 +11,51 @@ export const MyVideo = ({videoUrl, attachments}: videoProps) => {
   const frame = useCurrentFrame()
   const currentTimeInSeconds = frame / 30
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   const {
     updateTextAttachment,
     updateEmojiAttachment,
-    removeAttachment, updateCurrentTime
+    removeAttachment, updateCurrentTime,
+    selectedItem,
+    setSelectedItem
   } = useVideoContext()
 
-  const [selectedItem, setSelectedItem] = useState<
-  {
-    itemId: string;
-    type: "texts" | "emojis";
-    isChosen: boolean
-  } | null>(null);
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        wrapperRef.current &&
-        !wrapperRef.current.contains(event.target as Node)
-      ) {
-        setSelectedItem(null);
+      const video = videoRef.current
+      if(!video)
+        return
+      
+      const handleTimeUpdate = () => {
+        updateCurrentTime(videoRef.current?.currentTime!)
       }
-    };
-  
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
+
+      video.addEventListener("timeupdate", handleTimeUpdate);
+      return () => {
+        video.removeEventListener("timeupdate", handleTimeUpdate)
+      }
+    })
+
+    useEffect(() => {
+  const handleClickOutside = (event: MouseEvent) => {
+    if (
+      wrapperRef.current &&
+      !wrapperRef.current.contains(event.target as Node)
+    ) {
+      setSelectedItem(null);
+    }
+  };
+  document.addEventListener("mousedown", handleClickOutside);
+  return () => {
+    document.removeEventListener("mousedown", handleClickOutside);
+  };
+}, []);
 
   const handleDrag = (
     e: React.DragEvent<HTMLDivElement>,
     id: string,
-    type: "text" | "emoji"
+    type: "text" | "emoji" | "music"
   ) => {
     const rect = e.currentTarget.parentElement?.getBoundingClientRect()
     if (!rect) return
@@ -58,16 +69,8 @@ export const MyVideo = ({videoUrl, attachments}: videoProps) => {
       updateEmojiAttachment(id, { position: { x: xPercent, y: yPercent } })
     }
   }
-
-  if (!videoUrl) {
-    return (
-      <AbsoluteFill>
-        <div style={{ color: "red" }}>No video URL provided.</div>
-      </AbsoluteFill>
-    )
-  }
-  // lấy các attachment có ở thời điểm hiện tại trong video
-  const visibleTexts = attachments.texts.filter(
+  
+    const visibleTexts = attachments.texts.filter(
       (text) => currentTimeInSeconds >= text.startTime && currentTimeInSeconds <= text.endTime,
     )
       
@@ -78,78 +81,103 @@ export const MyVideo = ({videoUrl, attachments}: videoProps) => {
     music.startTime <= currentTimeInSeconds && music.endTime >= currentTimeInSeconds
   })
 
+
+  if (!videoUrl) {
+    return (
+      <AbsoluteFill>
+        <div style={{ color: "red" }}>No video URL provided.</div>
+      </AbsoluteFill>
+    )
+  }
       return (
         <AbsoluteFill className='rounded-sm bg-black'   ref={wrapperRef}>
-          <Video className='w-full h-full' src={videoUrl}/>
-          {visibleTexts.map((text) => (
-            <div
+          <Video className='w-full h-full' src={videoUrl} ref={videoRef} />
+          {visibleTexts.map((text) => 
+          {
+            const isSelected = selectedItem?.itemId === text.id && selectedItem.type === 'texts'
+            
+            return (<div
             key={text.id}
+            
               draggable
               onDragEnd={(e) => handleDrag(e, text.id, "text")}
-              onClick={() => {
-                setSelectedItem({
-                  itemId: text.id,
-                  type: "texts",
-                  isChosen: true
-                });
-              }}
+              onClick={(e) => {
+              e.stopPropagation();
+              setSelectedItem({
+                itemId: text.id,
+                type: "texts",
+              });
+            }}
               style={{
-                position: "absolute",
-                left: `${text.position.x}%`,
-                top: `${text.position.y}%`,
-                fontSize: `${text.style.fontSize}px`,
-                color: text.style.color,
-                fontFamily: text.style.fontFamily,
-                transform: "translate(-50%, -50%)",
-                border: selectedItem?.isChosen === true ? "2px solid blue" : "none",
-                cursor: "move",
+              position: "absolute",
+              left: `${text.position.x}%`,
+              top: `${text.position.y}%`,
+              transform: "translate(-50%, -50%)",
+              cursor: "move",
+              border: isSelected ? "2px solid blue" : "none",
+              borderRadius: "8px", // bo viền tròn đẹp hơn
+              padding: "2px",
               }}        >
           {text.content}
-          {selectedItem?.isChosen === true && (
+          {isSelected && (
             <X
               className="absolute top-[-10px] right-[-10px] text-red-500 hover:text-red-700 cursor-pointer transition-colors duration-300"
               onClick={() => removeAttachment("texts", text.id)}
             />
           )}
-        </div>
-      ))}
+        </div>)
+      })}
+      {visibleEmojis.map((emoji) => {
+        // Kiểm tra emoji này có đang được chọn không
+        const isSelected = selectedItem?.itemId === emoji.id && selectedItem?.type === "emojis";
 
-      {visibleEmojis.map((emoji) => (
-      <div
-         key={emoji.id}
-         draggable
-         onDragEnd={(e) => handleDrag(e, emoji.id, "emoji")}
-         onClick={() => {
-          setSelectedItem({
-            itemId: emoji.id,
-            type: "emojis",
-            isChosen: true
-          });
-        }}
-         style={{
-           position: "absolute",
-           left: `${emoji.position.x}%`,
-           top: `${emoji.position.y}%`,
-           transform: "translate(-50%, -50%)",
-           border: selectedItem?.isChosen === true ? "2px solid blue" : "none", 
-           cursor: "move",
-         }}>
-         <img
-           src={`https://fonts.gstatic.com/s/e/notoemoji/latest/${emoji.codepoint}/512.gif`}
-           alt="Emoji"
-           style={{
-             width: `${emoji.size}px`,
-             height: `${emoji.size}px`,
-           }}
-         />
-        {selectedItem?.isChosen === true && (
-          <X
-            className="absolute top-[-10px] right-[-10px] font-bold text-red-500 hover:text-red-700 cursor-pointer transition-colors duration-300"
-            onClick={() => removeAttachment("emojis", emoji.id)}
-          />
-        )}
-        </div>
-      ))}
-        </AbsoluteFill>
+        return (
+          <div
+            key={emoji.id}
+            draggable
+            onDragEnd={(e) => handleDrag(e, emoji.id, "emoji")}
+            onClick={(e) => {
+              e.stopPropagation();
+              setSelectedItem({
+                itemId: emoji.id,
+                type: "emojis",
+              });
+            }}
+            style={{
+              position: "absolute",
+              left: `${emoji.position.x}%`,
+              top: `${emoji.position.y}%`,
+              transform: "translate(-50%, -50%)",
+              cursor: "move",
+              border: isSelected ? "2px solid blue" : "none",
+              borderRadius: "8px", // bo viền tròn đẹp hơn
+              padding: "2px",
+            }}
+          >
+            <img
+              src={`https://fonts.gstatic.com/s/e/notoemoji/latest/${emoji.codepoint}/512.gif`}
+              alt="Emoji"
+              style={{
+                width: `${emoji.size}px`,
+                height: `${emoji.size}px`,
+                display: "block",
+              }}
+            />
+
+            {isSelected && (
+              <X
+                className="absolute top-[-10px] right-[-10px] text-red-500 hover:text-red-700 cursor-pointer bg-white rounded-full"
+                size={16}
+                onClick={(e) => {
+                  e.stopPropagation(); 
+                  removeAttachment("emojis", emoji.id);
+                  setSelectedItem(null); // bỏ chọn emoji khi xóa
+                }}
+              />
+            )}
+          </div>
+        );
+      })}
+      </AbsoluteFill>
       );
 }

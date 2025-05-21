@@ -2,215 +2,122 @@
 
 import { useVideoContext } from "@/hooks/use-video-context"
 import type React from "react"
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
+import TimeSlider from "./TimeSlider"
+import { formatTime } from "@/lib/time"
 
 export default function Timeline() {
-  const { videoData, attachments, updateAttachment, updateCurrentTime} = useVideoContext()
+  const {videoData, attachments, playerRef, updateCurrentTime} = useVideoContext() 
+  const videoDuration = videoData?.duration || 1
+  const currentTime = videoData?.currentTime || 0
+  const cursorPosition = currentTime/videoDuration * 100
+  const [isDragging, setDragging] = useState(false)
   const timelineRef = useRef<HTMLDivElement>(null)
-  const timelineTrackRef = useRef<HTMLDivElement>(null)
-  const [dragging, setDragging] = useState<{
-    id: string
-    type: "texts" | "emojis" | "musics"
-    action: "start" | "end" | "move"
-  } | null>(null)
-  const [draggingTimeIndicator, setDraggingTimeIndicator] = useState(false)
-  
-  if (!videoData) return null
 
-  const duration = videoData.duration
-  const currentTime = videoData.currentTime
-  const secondsArray = Array.from({ length: Math.ceil(duration) + 1 }, (_, i) => i)
 
-  // Calculate position and width for timeline elements
-  const getPositionAndWidth = (start: number, end: number) => {
-    const left = (start / duration) * 100
-    const width = ((end - start) / duration) * 100
-    return { left, width }
+  const handleCursorMouseDown = (e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent timeline click
+    setDragging(true)
   }
 
-  // Get color based on element type
-  const getColor = (type: string) => {
-    switch (type) {
-      case "texts":
-        return "bg-blue-500"
-      case "emojis":
-        return "bg-yellow-500"
-      case "musics":
-        return "bg-green-500"
-      default:
-        return "bg-gray-500"
-    }
+  const handleMouseMove = (e: MouseEvent) => {
+    if(!isDragging || !timelineRef.current) return
+    const rect = timelineRef.current.getBoundingClientRect()
+    const x = e.clientX - rect.left
+    const percentage = x/rect.width * 100
+    const clampedPercentage = Math.min(100, Math.max(0, percentage))
+
+    const newTime = (clampedPercentage / 100) * videoDuration
+    updateCurrentTime(newTime)
+  playerRef.current?.seekTo(newTime*30);
   }
-
-  const handleTimelineClick = (e: React.MouseEvent<HTMLDivElement>) => 
-    {
-      if (!timelineTrackRef.current || draggingTimeIndicator) return
-  
-      const rect = timelineTrackRef.current.getBoundingClientRect()
-      const x = e.clientX - rect.left
-      const percentX = (x / rect.width) * 100
-      const newTime = (percentX / 100) * duration
-  
-      // Update the current time in the context
-      updateCurrentTime(Math.max(0, Math.min(newTime, duration)))
-    }
-  
-
-  // Handle text, emojis, musics on timeline element
-  const handleTimelineElement = (
-    e: React.MouseEvent,
-    id: string,
-    type: "texts" | "emojis" | "musics",
-    action: "start" | "end" | "move",
-  ) => {
-    e.preventDefault()
-    setDragging({ id, type, action })
-
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!timelineRef.current) return
-
-      const rect = timelineRef.current.getBoundingClientRect()
-      const x = e.clientX - rect.left
-      const percentX = (x / rect.width) * 100
-      const newTime = (percentX / 100) * duration
-
-      const element = attachments[type].find((el) => el.id === id)
-      if (!element) return
-
-      if (action === "start") {
-        updateAttachment(type, id, {
-          startTime: Math.max(0, Math.min(newTime, element.endTime - 0.1)),
-        })
-      } else if (action === "end") {
-        updateAttachment(type, id, {
-          endTime: Math.max(element.startTime + 0.1, Math.min(newTime, duration)),
-        })
-      } else if (action === "move") {
-        const elementDuration = element.endTime - element.startTime
-        let newStart = Math.max(0, newTime - elementDuration / 2)
-        let newEnd = newStart + elementDuration
-
-        if (newEnd > duration) {
-          newEnd = duration
-          newStart = newEnd - elementDuration
-        }
-
-        updateAttachment(type, id, {
-          startTime: newStart,
-          endTime: newEnd,
-        })
-      }
-    }
 
     const handleMouseUp = () => {
-      setDragging(null)
-      document.removeEventListener("mousemove", handleMouseMove)
-      document.removeEventListener("mouseup", handleMouseUp)
-    }
-
-    document.addEventListener("mousemove", handleMouseMove)
-    document.addEventListener("mouseup", handleMouseUp)
+    setDragging(false)
   }
 
-  const handleTimeIndicatorDrag = (e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation() // Prevent triggering timeline click
-    setDraggingTimeIndicator(true)
-
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!timelineTrackRef.current) return
-
-      const rect = timelineTrackRef.current.getBoundingClientRect()
-      const x = e.clientX - rect.left
-      const percentX = (x / rect.width) * 100
-      const newTime = (percentX / 100) * duration
-
-      // Update the current time in the context
-      updateCurrentTime(Math.max(0, Math.min(newTime, duration)))
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener("mousemove", handleMouseMove)
+      window.addEventListener("mouseup", handleMouseUp)
+    } else {
+      window.removeEventListener("mousemove", handleMouseMove)
+      window.removeEventListener("mouseup", handleMouseUp)
     }
 
-    const handleMouseUp = () => {
-      setDraggingTimeIndicator(false)
-      document.removeEventListener("mousemove", handleMouseMove)
-      document.removeEventListener("mouseup", handleMouseUp)
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove)
+      window.removeEventListener("mouseup", handleMouseUp)
     }
+  }, [isDragging])
 
-    document.addEventListener("mousemove", handleMouseMove)
-    document.addEventListener("mouseup", handleMouseUp)
-  }
 
   return (
-    <div className="p-4 h-full" ref={timelineRef}>
-      <div className="mb-2">
-        {/* Time */}
-        <div className="flex items-center justify-between mb-2">
-          <div className="text-xs text-gray-500">
-            {Math.floor(currentTime / 60)}:{Math.floor(currentTime % 60).toString().padStart(2, "0")}{" "}
-          </div>
-          <div className="text-xs text-gray-500">
-            {Math.floor(duration / 60)}:{Math.floor(duration % 60).toString().padStart(2, "0")}
-          </div>
-        </div>
-
-      {/* edit text */}
-        <div className="relative h-10 bg-gray-100 rounded-md overflow-hidden">        
-          {attachments.texts.map((text) => {
-            const { left, width } = getPositionAndWidth(text.startTime, text.endTime)
-            return (
-            <div key={text.id} className={`absolute h-full rounded-md cursor-move flex items-center px-2 overflow-hidden ${getColor("texts")}`}
-                style={{ left: `${left}%`, width: `${width}%` }}
-                onMouseDown={(e) => handleTimelineElement(e, text.id, "texts", "move")}>
-                  <div 
-                  className="absolute left-0 top-0 w-2 h-full bg-black/20 cursor-w-resize"
-                  onMouseDown={(e) => handleTimelineElement(e, text.id, "texts", "start")}/>
-
-                  <div 
-                  className="absolute right-0 top-0 w-2 h-full bg-black/20 cursor-e-resize"
-                  onMouseDown={(e) => handleTimelineElement(e, text.id, "texts", "end")}/>
-                
-              </div>)})}
-        </div>
+  <div className="relative w-full h-64px" ref={timelineRef} >
+    <div className='flex justify-between mt-4'>
+      <span className=''>{formatTime(0)}</span>
+      <span className=''>{formatTime(Math.floor(videoDuration! / 4))}</span>
+      <span className=''>{formatTime(Math.floor(videoDuration! / 2))}</span>
+      <span className=''>{formatTime(Math.floor((3 * videoDuration!) / 4))}</span>
+      <span className=''>{formatTime(Math.floor(videoDuration!))}</span>
       </div>
+      {/* timeline ruler */}
+        <div className='m-2'>
+          <div className='w-full flex justify-between items-center h-2 bg-gray-200 border-r border-l'>
+            {[...Array(20)].map((_, i) => (
+                  <div key={i} className="h-2 w-px bg-gray-400 m-auto"></div>
+            ))}
+          </div>
+      </div>
+      {/* attachmens  */}
+    <div className="overflow-y-auto overflow-x-hidden max-h-64 space-y-2">
       <div>
-        <div className="flex items-center justify-between mb-2">
-          <div className="text-xs text-gray-500">
-            {Math.floor(currentTime / 60)} : {Math.floor(currentTime % 60).toString().padStart(2, "0")}{" "}
-          </div>
-          <div className="text-xs text-gray-500">
-            {Math.floor(duration / 60)}:{Math.floor(duration % 60).toString().padStart(2, "0")}
-          </div>
+      {attachments.emojis.map((emoji) => (
+        <TimeSlider startTime={emoji.startTime} endTime={emoji.endTime} type="emoji" objectId={emoji.id} content={emoji.codepoint}/>
+      ))}
       </div>
-          <div className="relative h-10 bg-gray-100 rounded-md overflow-hidden">
-            {attachments.emojis.map((emoji) => {
-              const { left, width } = getPositionAndWidth(emoji.startTime, emoji.endTime)
-              return (
-                <div
-                  key={emoji.id}
-                  className={`absolute h-full rounded-md cursor-move flex items-center justify-center px-2 overflow-hidden ${getColor("emojis")}`}
-                  style={{ left: `${left}%`, width: `${width}%` }}
-                  onMouseDown={(e) => handleTimelineElement(e, emoji.id, "emojis", "move")}
-                >
-                  <div className="text-xs">
-                    <img
-                      src={`https://fonts.gstatic.com/s/e/notoemoji/latest/${emoji.codepoint}/32.gif`}
-                      alt="Emoji"
-                      className="w-6 h-6"
-                    />
-                  </div>
-                  {/* Resize handles */}
-                  <div
-                    className="absolute left-0 top-0 w-2 h-full bg-black/20 cursor-w-resize"
-                    onMouseDown={(e) => handleTimelineElement(e, emoji.id, "emojis", "start")}
-                  ></div>
-                  <div
-                    className="absolute right-0 top-0 w-2 h-full bg-black/20 cursor-e-resize"
-                    onMouseDown={(e) => handleTimelineElement(e, emoji.id, "emojis", "end")}
-                  ></div>
-                </div>
-              )
-            })}
+
+      <div>
+        {attachments.texts.map((text) => (
+          <TimeSlider startTime={text.startTime} endTime={text.endTime} type="text" objectId={text.id} content={text.content}/>
+        ))}
+      </div>
+
+      <div>
+        {attachments.musics.map((music) => (
+          <TimeSlider startTime={music.startTime} endTime={music.endTime} type="music" objectId={music.id} content={music.title}/>
+        ))}
+      </div>
+    </div>
+
+    {/* indicator */}
+    <div className="absolute top-8 w-4 z-20"
+          style={{
+            left: `${cursorPosition}%`,
+            height: "90%",
+            transform: "translateX(-50%)",
+            pointerEvents: "none", 
+          }}
+        >
+          <div
+            className="absolute top-0 bottom-0 left-1/2 w-0.5 bg-red-500 transform -translate-x-1/2"
+            style={{ pointerEvents: "none" }}
+          ></div>
+
+          <div
+            className="absolute -top-4 left-1/2 w-6 h-6 bg-red-500 rounded-full transform -translate-x-1/2 cursor-ew-resize flex items-center justify-center"
+            style={{ pointerEvents: "auto" }}
+            onMouseDown={handleCursorMouseDown}
+          >
+            <div className="w-2 h-2 bg-white rounded-full"></div>
+          </div>
+
+          <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-red-500 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+            {formatTime(Math.floor(currentTime))}
           </div>
         </div>
-        </div>
-  )
+
+
+  </div>  
+)
 }

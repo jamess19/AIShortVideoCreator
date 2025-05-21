@@ -1,39 +1,34 @@
 import React, { useEffect,useRef, useState } from 'react';
 import {Player, PlayerRef} from '@remotion/player';
 import { MyVideo } from './RemotionVideo';
-import { Fullscreen } from 'lucide-react';
+import { Fullscreen, Play, Pause, SkipBack, SkipForward } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select"
 import { useVideoContext } from '@/hooks/use-video-context';
+import { Button } from '@/components/ui/button';
+import DownloadVideo from './DownloadVideo';
+import Timeline from './Timeline';
+import { formatTime } from '@/lib/time';
 
 function Preview() {
   const [screenSize, setScreenSize] = useState({
-    width:700,
-    height:400
+    width:800,
+    height:500
   })
-  const {videoData, isLoading, attachments, updateCurrentTime} = useVideoContext()
+  const {videoData, isLoading, attachments, playerRef} = useVideoContext()
+  const [isPlaying, setIsPlaying] = useState(false)
+
+  const handleSeek = (time: number) => {
+  const frame = Math.floor(time * 30);
+  playerRef.current?.seekTo(frame);
+};
 
   if (isLoading || !videoData) return <p>Loading video...</p>;
-
+  
 
   return (
-  <div>
-    <div className="flex items-center justify-center relative">
-        <Player
-          className='rounded-sm'
-          component={MyVideo} 
-          durationInFrames={Math.floor(videoData.duration * 30)}
-          compositionWidth={screenSize.width} 
-          compositionHeight={screenSize.height} 
-          fps={30}
-          inputProps={{
-            videoUrl: videoData.videoUrl,
-            attachments: attachments,
-          }}
-          controls
-          />
-    </div>
-
-    <div className="flex items-center mt-2 gap-2 ">
+  <div className='w-full mx-2'>
+    <div className='flex items-center justify-between mb-2 w-full'>
+      <div className="flex items-center gap-2 ">
           <Fullscreen/>
           <Select onValueChange={(v) => setScreenSize(JSON.parse(v))}>
             <SelectTrigger className="w-[180px] z-10">
@@ -45,7 +40,65 @@ function Preview() {
               <SelectItem className='hover:bg-gray-200' value={JSON.stringify({width:400, height:600})}>9:16</SelectItem>
             </SelectContent>
           </Select> 
+        </div>
+        <div>
+          <DownloadVideo/>
+          </div>
+
     </div>
+
+
+    <div className="flex items-center justify-center relative">
+        <Player
+          ref={playerRef}
+          className='rounded-sm'
+          component={MyVideo} 
+          durationInFrames={Math.floor(videoData.duration * 30)}
+          compositionWidth={screenSize.width} 
+          compositionHeight={screenSize.height} 
+          fps={30}
+          inputProps={{
+            videoUrl: videoData.videoUrl,
+            attachments: attachments,
+          }}          
+          />
+    </div>
+    <div className='mx-2 mt-2'>
+      {formatTime(Math.floor(videoData.currentTime))}/ {formatTime(Math.floor(videoData.duration))}
+      </div>
+    {/* === Time Slider ===  */}
+    <div className="w-full flex items-center justify-center">
+        <input
+          type="range"
+          min={0}
+          max={videoData.duration}
+          value={videoData.currentTime}
+          onChange={(e) => handleSeek(Number(e.target.value))}
+          className="w-full m-2 gap-2 accent-blue-500"
+        />
+      </div>
+
+
+    <div className="flex gap-4 items-center justify-center mt-2">
+      <Button className='border hover:bg-gray-200'>
+        <SkipBack size={32}/>
+      </Button>
+      <Button
+      className='border hover:bg-gray-200'
+       onClick={() => {
+        setIsPlaying((prev) => !prev);
+        isPlaying ? playerRef.current?.pause() : playerRef.current?.play();
+      }}>
+        {isPlaying ? <Pause size={32} /> : <Play size={32} />}
+      </Button>
+
+      <Button className='border hover:bg-gray-200'>
+        <SkipForward size={32}/>
+      </Button>
+    </div>
+    <Timeline/>
+    
+  
   </div>
   )
 }

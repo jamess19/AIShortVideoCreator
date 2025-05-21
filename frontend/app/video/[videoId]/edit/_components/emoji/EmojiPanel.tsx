@@ -8,9 +8,6 @@ const emojiList = getAvailableEmojis();
 
 function EmojiPanel() {
   const { addEmojiAttachment, videoData } = useVideoContext()
-  const [startTime, setStart] = useState(0);
-  const [endTime, setEnd] = useState(0);
-
 
   const handleAddEmoji = (codepoint: string) => {
     if (!videoData) return
@@ -21,7 +18,7 @@ function EmojiPanel() {
       position: { x: 50, y: 50 }, // Mặc định ở giữa
       size: 64, // Kích thước mặc định
       startTime: videoData.currentTime,
-      endTime: videoData.duration, // Mặc định hiển thị đến hết video
+      endTime: videoData.currentTime + 20, // Mặc định hiển thị đến hết video
     })
   }
 

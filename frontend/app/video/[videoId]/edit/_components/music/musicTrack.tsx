@@ -1,7 +1,8 @@
 // components/MusicTrack.tsx
 "use client"
 
-import { Play, Pause } from "lucide-react"
+import { useVideoContext } from "@/hooks/use-video-context"
+import { Play, Pause, PlusCircle} from "lucide-react"
 import { useRef, useState } from "react"
 import MouseEvent from "react"
 interface MusicTrackProps {
@@ -11,10 +12,11 @@ interface MusicTrackProps {
   publicId: string
 }
 
-export default function MusicTrack({ name, artist, musicUrl }: MusicTrackProps) {
+export default function MusicTrack({ name, artist, musicUrl, publicId}: MusicTrackProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isChosen, setIsChosen] = useState(false);
+  const {addMusicAttachment, videoData} = useVideoContext()
   const togglePlay: React.MouseEventHandler<HTMLButtonElement> = (e) => {
     e.stopPropagation(); 
     if (audioRef.current!.paused) {
@@ -25,6 +27,21 @@ export default function MusicTrack({ name, artist, musicUrl }: MusicTrackProps) 
       setIsPlaying(false);
     }
   };
+
+  const addMusicHandle= () => {
+    if (!videoData) return
+
+    addMusicAttachment({
+      id: 'something',
+      title: name,
+      artist: artist,
+      url: musicUrl,  
+      publicId: publicId,
+      startTime: videoData.currentTime,
+      endTime: videoData.currentTime + 20,
+    })
+
+  }
   return (
     <div onClick={() => {setIsChosen(!isChosen)}}         
     className={`p-3 border shadow-gray-400 shadow-sm rounded-md cursor-pointer hover:bg-gray-50 ${
@@ -42,6 +59,11 @@ export default function MusicTrack({ name, artist, musicUrl }: MusicTrackProps) 
           <button onClick={togglePlay} className="hover:bg-gray-200">
             {isPlaying ? (<Pause className="size-5 m-2"/>) : (<Play className="size-5 m-2"/>)}
           </button>
+
+          <button onClick={addMusicHandle} className="hover:bg-gray-200">
+            <PlusCircle/>
+          </button>
+          
         </div>
       </div>
     </div>

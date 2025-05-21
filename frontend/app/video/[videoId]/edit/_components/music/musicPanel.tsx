@@ -21,7 +21,7 @@ export default function MusicPanel() {
     const [loading, setLoading] = useState<boolean>(true)
     const [error, setError] = useState<string | null>(null)
     const [selectedTrack, setSelectedTrack] = useState<MusicTrack>()
-    const { addMusicAttachment, videoData } = useVideoContext()
+    const { addMusicAttachment, attachments, videoData } = useVideoContext()
 
     useEffect(() => {
       const fetchMusicTrack = async () => {
@@ -69,6 +69,7 @@ export default function MusicPanel() {
         artist: track.artist,
         startTime: effectiveStartTime,
         endTime: effectiveEndTime,
+        publicId: track.publicId
       })
   
   
