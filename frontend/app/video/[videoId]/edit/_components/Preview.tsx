@@ -60,42 +60,11 @@ function Preview() {
           inputProps={{
             videoUrl: videoData.videoUrl,
             attachments: attachments,
-          }}          
+          }}
+          controls     
           />
     </div>
-    <div className='mx-2 mt-2'>
-      {formatTime(Math.floor(videoData.currentTime))}/ {formatTime(Math.floor(videoData.duration))}
-      </div>
-    {/* === Time Slider ===  */}
-    <div className="w-full flex items-center justify-center">
-        <input
-          type="range"
-          min={0}
-          max={videoData.duration}
-          value={videoData.currentTime}
-          onChange={(e) => handleSeek(Number(e.target.value))}
-          className="w-full m-2 gap-2 accent-blue-500"
-        />
-      </div>
 
-
-    <div className="flex gap-4 items-center justify-center mt-2">
-      <Button className='border hover:bg-gray-200'>
-        <SkipBack size={32}/>
-      </Button>
-      <Button
-      className='border hover:bg-gray-200'
-       onClick={() => {
-        setIsPlaying((prev) => !prev);
-        isPlaying ? playerRef.current?.pause() : playerRef.current?.play();
-      }}>
-        {isPlaying ? <Pause size={32} /> : <Play size={32} />}
-      </Button>
-
-      <Button className='border hover:bg-gray-200'>
-        <SkipForward size={32}/>
-      </Button>
-    </div>
     <Timeline/>
     
   
