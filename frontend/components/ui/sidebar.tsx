@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, FileText, Eye, Video, Plus } from "lucide-react";
+import { Home, FileText, Eye, Video } from "lucide-react";
 
-export function AppSidebar() {
+export function Sidebar() {
   const pathname = usePathname();
 
   const routes = [
@@ -35,13 +35,13 @@ export function AppSidebar() {
   ];
 
   return (
-    <div className="w-64 fixed top-0 left-0 h-screen border-r border-gray-200 bg-white flex flex-col z-50">
+    <div className="w-64 border-r border-gray-200 bg-white h-full">
       <div className="p-4">
         <h1 className="text-xl font-bold text-purple-600 flex items-center">
           <Video className="mr-2" /> VideoAI
         </h1>
       </div>
-      <nav className="mt-6 flex-grow">
+      <nav className="mt-6">
         {routes.map((route) => (
           <Link
             key={route.href}
@@ -57,15 +57,6 @@ export function AppSidebar() {
           </Link>
         ))}
       </nav>
-      <div className="p-4">
-        <Link
-          href="/script"
-          className="bg-purple-600 hover:bg-purple-700 text-white w-full py-3 rounded-md flex items-center justify-center gap-2"
-        >
-          <Plus size={18} />
-          <span>Tạo video mới</span>
-        </Link>
-      </div>
     </div>
   );
 }
