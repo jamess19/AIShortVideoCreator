@@ -1,0 +1,222 @@
+"use client"
+
+import type React from "react"
+
+import { useState } from "react"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Label } from "@/components/ui/label"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { Upload, Sparkles, RefreshCw } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
+
+interface BackgroundSelectorProps {
+  currentBackground: any
+  onBackgroundChange: (background: any) => void
+}
+
+export function BackgroundSelector({ currentBackground, onBackgroundChange }: BackgroundSelectorProps) {
+  const [activeTab, setActiveTab] = useState<string>("templates")
+  const [selectedBackground, setSelectedBackground] = useState<string>(currentBackground?.url ? "custom" : "bg1")
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false)
+  const [aiPrompt, setAiPrompt] = useState("")
+  const { toast } = useToast()
+
+  const backgrounds = [
+    { id: "bg1", type: "solid", color: "bg-gradient-to-r from-purple-500 to-pink-500" },
+    { id: "bg2", type: "solid", color: "bg-gradient-to-r from-cyan-500 to-blue-500" },
+    { id: "bg3", type: "solid", color: "bg-gradient-to-r from-yellow-400 to-orange-500" },
+    { id: "bg4", type: "image", url: "/placeholder.svg?height=80&width=120" },
+    { id: "bg5", type: "image", url: "/placeholder.svg?height=80&width=120" },
+    { id: "bg6", type: "image", url: "/placeholder.svg?height=80&width=120" },
+  ]
+
+  const handleBackgroundSelect = (bgId: string) => {
+    setSelectedBackground(bgId)
+
+    const selectedBg = backgrounds.find((bg) => bg.id === bgId)
+    if (selectedBg) {
+      onBackgroundChange({
+        type: selectedBg.type,
+        ...(selectedBg.type === "solid" ? { color: selectedBg.color } : { url: selectedBg.url }),
+      })
+    }
+  }
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // In a real app, you would upload this file to a server
+    // For now, we'll create a local URL
+    const imageUrl = URL.createObjectURL(file)
+
+    onBackgroundChange({
+      type: "image",
+      url: imageUrl,
+    })
+
+    toast({
+      title: "Tải lên thành công",
+      description: "Hình nền đã được cập nhật",
+    })
+  }
+
+  const generateAIBackground = () => {
+    if (!aiPrompt.trim()) {
+      toast({
+        title: "Vui lòng nhập mô tả",
+        description: "Nhập mô tả để AI tạo hình nền",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setIsGeneratingAI(true)
+
+    // Simulate AI image generation
+    setTimeout(() => {
+      // In a real app, this would be an API call to an AI image generator
+      const generatedImageUrl = "/placeholder.svg?height=720&width=1280"
+
+      onBackgroundChange({
+        type: "image",
+        url: generatedImageUrl,
+        aiGenerated: true,
+        prompt: aiPrompt,
+      })
+
+      setIsGeneratingAI(false)
+
+      toast({
+        title: "Tạo hình nền thành công",
+        description: "AI đã tạo hình nền theo mô tả của bạn",
+      })
+    }, 2000)
+  }
+
+  return (
+    <div className="space-y-4">
+      <Tabs defaultValue={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="w-full">
+          <TabsTrigger value="templates" className="flex-1">
+            Mẫu có sẵn
+          </TabsTrigger>
+          <TabsTrigger value="ai" className="flex-1">
+            Tạo bằng AI
+          </TabsTrigger>
+          <TabsTrigger value="upload" className="flex-1">
+            Tải lên
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="templates" className="space-y-4">
+          <RadioGroup
+            value={selectedBackground}
+            onValueChange={handleBackgroundSelect}
+            className="grid grid-cols-3 gap-2"
+          >
+            {backgrounds.map((bg) => (
+              <div key={bg.id} className="relative">
+                <RadioGroupItem value={bg.id} id={bg.id} className="sr-only" />
+                <Label
+                  htmlFor={bg.id}
+                  className="cursor-pointer block h-20 rounded-md overflow-hidden border-2 transition-all"
+                  style={{
+                    borderColor: selectedBackground === bg.id ? "rgb(147, 51, 234)" : "transparent",
+                  }}
+                >
+                  {bg.type === "solid" ? (
+                    <div className={`w-full h-full ${bg.color}`}></div>
+                  ) : (
+                    <img src={bg.url || "/placeholder.svg"} alt="Background" className="w-full h-full object-cover" />
+                  )}
+                </Label>
+              </div>
+            ))}
+          </RadioGroup>
+        </TabsContent>
+
+        <TabsContent value="ai" className="space-y-4">
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="ai-prompt" className="block mb-2">
+                Mô tả hình nền bạn muốn
+              </Label>
+              <div className="flex gap-2">
+                <Input
+                  id="ai-prompt"
+                  placeholder="Ví dụ: Cảnh biển xanh với bầu trời trong vắt..."
+                  value={aiPrompt}
+                  onChange={(e) => setAiPrompt(e.target.value)}
+                />
+                <Button
+                  onClick={generateAIBackground}
+                  disabled={isGeneratingAI || !aiPrompt.trim()}
+                  className="bg-purple-600 hover:bg-purple-700 whitespace-nowrap"
+                >
+                  {isGeneratingAI ? (
+                    <>
+                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                      Đang tạo...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="mr-2 h-4 w-4" />
+                      Tạo hình
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            {isGeneratingAI ? (
+              <div className="flex justify-center items-center h-40 border-2 border-dashed rounded-md">
+                <div className="text-center">
+                  <RefreshCw className="h-8 w-8 text-purple-600 animate-spin mx-auto mb-2" />
+                  <p className="text-muted-foreground">Đang tạo hình nền...</p>
+                </div>
+              </div>
+            ) : currentBackground?.aiGenerated ? (
+              <div className="space-y-2">
+                <div className="border-2 border-purple-300 rounded-md overflow-hidden">
+                  <img
+                    src={currentBackground.url || "/placeholder.svg"}
+                    alt="AI Generated Background"
+                    className="w-full h-40 object-cover"
+                  />
+                </div>
+                <p className="text-sm text-muted-foreground">Mô tả: {currentBackground.prompt || aiPrompt}</p>
+              </div>
+            ) : null}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="upload">
+          <div className="flex flex-col items-center justify-center border-2 border-dashed rounded-md p-6 h-40">
+            <Upload className="h-8 w-8 text-muted-foreground mb-2" />
+            <p className="text-sm text-muted-foreground mb-2">Kéo thả hoặc nhấp để tải lên</p>
+            <Button variant="outline" size="sm" onClick={() => document.getElementById("bg-upload")?.click()}>
+              Chọn tệp
+            </Button>
+            <Input id="bg-upload" type="file" className="hidden" accept="image/*" onChange={handleFileUpload} />
+          </div>
+
+          {currentBackground?.type === "image" && activeTab === "upload" && (
+            <div className="mt-4">
+              <p className="text-sm font-medium mb-2">Hình nền hiện tại:</p>
+              <div className="border rounded-md overflow-hidden">
+                <img
+                  src={currentBackground.url || "/placeholder.svg"}
+                  alt="Current Background"
+                  className="w-full h-20 object-cover"
+                />
+              </div>
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
+    </div>
+  )
+}

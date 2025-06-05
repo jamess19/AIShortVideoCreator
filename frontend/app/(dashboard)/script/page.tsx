@@ -5,13 +5,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Clock, Play, Volume2, ArrowRight } from "lucide-react";
+import { Clock, Play, Volume2, ArrowRight, TrendingUp
+ } from "lucide-react";
 import { ScriptSuggestions } from "./components/script-suggestion";
+import TrendingSearch from "./components/trending-search";
 
 export default function ScriptPage() {
   const [selectedVoice, setSelectedVoice] = useState("minh-anh");
   const [scriptDuration, setScriptDuration] = useState(30);
   const [volumeLevel, setVolumeLevel] = useState(80);
+  const [selectedContent, setSelectedContent] = useState<any>(null);
+  const [selectedScript, setSelectedScript] = useState<string>("");
 
   const voices = [
     { id: "minh-anh", name: "Minh Anh", gender: "Nữ" },
@@ -28,36 +32,48 @@ export default function ScriptPage() {
       <p className="text-gray-600 mb-6">
         Viết kịch bản cho video của bạn hoặc để AI gợi ý nội dung
       </p>
-
+      {selectedContent && (
+          <div className="p-3 bg-purple-50 rounded-md border border-purple-200 mb-6">
+            <div className="flex items-center">
+              <TrendingUp className="h-4 w-4 text-purple-600 mr-2" />
+              <span className="text-sm font-medium text-purple-800">Nội dung đã chọn: </span>
+              <span className="text-sm text-purple-700 ml-1">{selectedContent.title}</span>
+            </div>
+          </div>
+      )}
       <div className="flex flex-col md:flex-row gap-6">
         <div className="w-full md:w-2/3 border border-gray-300 rounded-lg p-6">
           <Tabs defaultValue="write">
             <TabsList className="mb-4 bg-gray-100 rounded-lg">
               <TabsTrigger
-                value="write"
                 className="px-4 data-[state=active]:bg-white data-[state=active]:text-gray-800"
-              >
+                value="trending">
+                  Tìm kiếm nội dung xu hướng
+              </TabsTrigger>
+              <TabsTrigger
+                value="write"
+                className="px-4 data-[state=active]:bg-white data-[state=active]:text-gray-800">
                 Viết kịch bản
               </TabsTrigger>
               <TabsTrigger
                 value="ai"
-                className="px-4 data-[state=active]:bg-white data-[state=active]:text-gray-800"
-              >
+                className="px-4 data-[state=active]:bg-white data-[state=active]:text-gray-800">
                 Gợi ý AI
               </TabsTrigger>
             </TabsList>
 
+            <TabsContent value="trending" className="space-y-4">
+                  <TrendingSearch SetSelectedContentForParent={setSelectedContent}/>
+            </TabsContent>
             <TabsContent value="write">
               <div className="mb-4 flex items-center">
                 <Clock className="w-5 h-5 mr-2 text-gray-500" />
                 <span className="text-gray-500">
                   Thời lượng: {scriptDuration} giây
                 </span>
-
                 <Button
                   variant="outline"
-                  className="ml-auto flex items-center gap-2 text-purple-600 border-purple-200 bg-white hover:bg-purple-50"
-                >
+                  className="ml-auto flex items-center gap-2 text-purple-600 border-purple-200 bg-white hover:bg-purple-50">
                   <span>Cải thiện</span>
                 </Button>
               </div>
@@ -86,7 +102,7 @@ export default function ScriptPage() {
             </TabsContent>
 
             <TabsContent value="ai" className="space-y-4">
-              <ScriptSuggestions />
+              <ScriptSuggestions selectedContent={selectedContent} />
             </TabsContent>
           </Tabs>
         </div>
@@ -144,7 +160,7 @@ export default function ScriptPage() {
           </div>
 
           <Button className="w-full mt-6 bg-purple-600 hover:bg-purple-700 text-white flex items-center justify-center gap-2">
-            <span>Xem trước video</span>
+            <span>Tiếp tục</span>
             <ArrowRight className="w-4 h-4" />
           </Button>
         </div>
