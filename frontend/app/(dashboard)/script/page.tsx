@@ -9,8 +9,10 @@ import { Clock, Play, Volume2, ArrowRight, TrendingUp
  } from "lucide-react";
 import { ScriptSuggestions } from "./components/script-suggestion";
 import TrendingSearch from "./components/trending-search";
+import { useRouter } from "next/navigation";
 
 export default function ScriptPage() {
+  const router = useRouter();
   const [selectedVoice, setSelectedVoice] = useState("minh-anh");
   const [scriptDuration, setScriptDuration] = useState(30);
   const [volumeLevel, setVolumeLevel] = useState(80);
@@ -23,7 +25,14 @@ export default function ScriptPage() {
     { id: "thu-ha", name: "Thu Hà", gender: "Nữ" },
     { id: "quang-minh", name: "Quang Minh", gender: "Nam" },
   ];
-
+  const HandleNextStep = () => {
+    if (selectedScript) {
+      localStorage.setItem("selectedScript", selectedScript);
+      router.push("/scenes");
+    } else {
+      console.warn("No script selected");
+    }
+  };
   return (
     <div className="p-8 text-black bg-white ml-64">
       <h1 className="text-2xl font-bold mb-2">
@@ -102,7 +111,7 @@ export default function ScriptPage() {
             </TabsContent>
 
             <TabsContent value="ai" className="space-y-4">
-              <ScriptSuggestions selectedContent={selectedContent} />
+              <ScriptSuggestions selectedContent={selectedContent} SetSelectedScriptForParent={setSelectedScript} />
             </TabsContent>
           </Tabs>
         </div>
@@ -159,7 +168,10 @@ export default function ScriptPage() {
             <span className="text-gray-600 min-w-[40px]">{volumeLevel}%</span>
           </div>
 
-          <Button className="w-full mt-6 bg-purple-600 hover:bg-purple-700 text-white flex items-center justify-center gap-2">
+          <Button
+            onClick={HandleNextStep}
+            disabled={!selectedScript} 
+            className="w-full mt-6 bg-purple-600 hover:bg-purple-700 text-white flex items-center justify-center gap-2">
             <span>Tiếp tục</span>
             <ArrowRight className="w-4 h-4" />
           </Button>

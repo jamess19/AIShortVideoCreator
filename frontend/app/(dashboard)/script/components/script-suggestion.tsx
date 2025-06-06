@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Sparkles, RefreshCw } from "lucide-react"
 import { AutoGenerateScriptApi } from "@/services/video_script_api"
 
-export function ScriptSuggestions({selectedContent}: { selectedContent: any }) {
+export function ScriptSuggestions({selectedContent, SetSelectedScriptForParent}: { selectedContent: any, SetSelectedScriptForParent: (script: string) => void }) {
   //const [keyword, setKeyword] = useState("")
   const [isGenerating, setIsGenerating] = useState(false)
   const [suggestions, setSuggestions] = useState<string[]>([])
@@ -17,7 +17,8 @@ export function ScriptSuggestions({selectedContent}: { selectedContent: any }) {
     setIsGenerating(true)
 
     const request = {
-        prompt: "Tạo nội dung kịch bản cho 1 video ngắn khoảng 1 phút với nội dung về thực trạng giáo dục tại Việt Nam bằng tiếng Việt. Bạn chỉ cần trả về lời thoại 1 cách liên tục. Không cần gợi ý từng cảnh"
+        content: selectedContent.title,
+        video_duration: 60, // Giả sử video có độ dài 60 giây
     };
     console.log("Request:", request);
     try{
@@ -40,6 +41,7 @@ export function ScriptSuggestions({selectedContent}: { selectedContent: any }) {
 
   const handleSelectSuggestion = (suggestion: string) => {
     console.log("Selected suggestion:", suggestion)
+    SetSelectedScriptForParent(suggestion)
   }
 
   return (

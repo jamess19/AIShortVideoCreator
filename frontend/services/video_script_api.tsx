@@ -15,3 +15,12 @@ export const AutoGenerateScriptApi = async (request) => {
         throw error;
     }
 }
+export const GetVideoScriptMetadataApi = async (request) => {
+    try {
+        const response = await api.post("/video_script/video_metadata", request);
+        return response.data;
+    } catch (error) {
+        console.error("Error getting video metadata:", error);
+        throw error;
+    }
+}

@@ -65,7 +65,7 @@ export function SceneEditor({ scene, onUpdate }: SceneEditorProps) {
           <TabsContent value="text" className="space-y-4">
             <div className="flex justify-between items-center">
               <h3 className="font-medium">Nội dung cảnh</h3>
-              <Button variant="outline" size="sm" className="flex items-center" onClick={improveTextWithAI}>
+              <Button variant="outline" size="sm" className="flex items-center bg-white" onClick={improveTextWithAI}>
                 <Sparkles className="h-4 w-4 mr-2 text-purple-600" />
                 Cải thiện với AI
               </Button>
@@ -75,7 +75,7 @@ export function SceneEditor({ scene, onUpdate }: SceneEditorProps) {
               value={sceneText}
               onChange={(e) => handleTextChange(e.target.value)}
               placeholder="Nhập nội dung cho cảnh này..."
-              className="min-h-[200px]"
+              className="min-h-[200px] bg-white"
             />
 
             <div className="text-sm text-muted-foreground">

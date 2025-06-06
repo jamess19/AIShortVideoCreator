@@ -7,12 +7,11 @@ import { ArrowLeft, Save, Layers } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
-
+import { GetVideoScriptMetadataApi } from "@/services/video_script_api"
 import { SceneEditor } from "./components/scene-editor"
 
-export default function ScenesPage() {
-  const [scriptJson, setScriptJson] = useState<any>({
-    "scenes": [
+const mockScriptJson = {
+  "scenes": [
         {
             "scene_id": "1",
             "start_time": 0,
@@ -32,22 +31,50 @@ export default function ScenesPage() {
             "music": null,
         },
     ],
-  })
+}
+export default function ScenesPage() {
+  const [scriptJson, setScriptJson] = useState<any>(null)
   const [activeSceneId, setActiveSceneId] = useState<string>("")
   const [isSaving, setIsSaving] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
 
   useEffect(() => {
-    // Load script JSON from localStorage
-    const scriptFromStorage = localStorage.getItem("scriptJson")
-    if (scriptFromStorage) {
-      const parsedScript = JSON.parse(scriptFromStorage)
-      setScriptJson(parsedScript)
-
-      // Set first scene as active by default
-      if (parsedScript.scenes && parsedScript.scenes.length > 0) {
-        setActiveSceneId(parsedScript.scenes[0].id)
+    const GetVideoScriptMetadata = async (request) => {
+      try {
+        const response = await GetVideoScriptMetadataApi(request)
+        if (response && response.message === "success") {
+          setScriptJson(response.data)
+          localStorage.setItem("selectedScript", JSON.stringify(response.data))
+          if (response.data.scenes && response.data.scenes.length > 0) {
+            setActiveSceneId(response.data.scenes[0].scene_id)
+          }
+        } else {
+          toast({
+            title: "Lỗi",
+            description: "Không thể tải dữ liệu kịch bản",
+            variant: "destructive",
+          })
+        }
+      } catch (error) {
+        console.error("Error fetching script metadata:", error)
+        toast({
+          title: "Lỗi",
+          description: "Không thể tải dữ liệu kịch bản",
+          variant: "destructive",
+        })
+      }
+    }
+    const selectedScript = localStorage.getItem("selectedScript")
+    if (selectedScript) {
+      const request = {
+        script: selectedScript
+      }
+      GetVideoScriptMetadata(request)
+    } else {
+      setScriptJson(mockScriptJson) // Use mock data if no script is found
+      if(mockScriptJson.scenes && mockScriptJson.scenes.length > 0) {
+        setActiveSceneId(mockScriptJson.scenes[0].scene_id)
       }
     }
   }, [])
@@ -65,7 +92,7 @@ export default function ScenesPage() {
     }
 
     setScriptJson(updatedScript)
-    localStorage.setItem("scriptJson", JSON.stringify(updatedScript))
+    localStorage.setItem("selectedScript", JSON.stringify(updatedScript))
   }
 
   const saveAndContinue = () => {
@@ -101,7 +128,7 @@ export default function ScenesPage() {
           <h2 className="text-2xl font-bold mb-4 text-black">Không tìm thấy dữ liệu kịch bản</h2>
           <p className="text-muted-foreground mb-6 text-black">Vui lòng quay lại trang kịch bản để tạo kịch bản trước</p>
           <Link href="/script">
-            <Button className="text-black">Quay lại trang kịch bản</Button>
+            <Button className="text-black bg-white">Quay lại trang kịch bản</Button>
           </Link>
         </div>
       </div>
@@ -117,7 +144,7 @@ export default function ScenesPage() {
         </div>
         <div className="flex gap-2">
           <Link href="/script">
-            <Button variant="outline" className="flex items-center">
+            <Button variant="outline" className="flex items-center bg-white text-black hover:bg-gray-100">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Quay lại kịch bản
             </Button>
