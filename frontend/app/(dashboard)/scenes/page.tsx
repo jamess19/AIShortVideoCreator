@@ -36,6 +36,7 @@ export default function ScenesPage() {
   const [scriptJson, setScriptJson] = useState<any>(null)
   const [activeSceneId, setActiveSceneId] = useState<string>("")
   const [isSaving, setIsSaving] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
   const { toast } = useToast()
 
@@ -55,6 +56,7 @@ export default function ScenesPage() {
             description: "Không thể tải dữ liệu kịch bản",
             variant: "destructive",
           })
+          setScriptJson(null)
         }
       } catch (error) {
         console.error("Error fetching script metadata:", error)
@@ -63,6 +65,10 @@ export default function ScenesPage() {
           description: "Không thể tải dữ liệu kịch bản",
           variant: "destructive",
         })
+        setScriptJson(null)
+      }
+      finally {
+        setIsLoading(false)
       }
     }
     const selectedScript = localStorage.getItem("selectedScript")
@@ -76,6 +82,7 @@ export default function ScenesPage() {
       if(mockScriptJson.scenes && mockScriptJson.scenes.length > 0) {
         setActiveSceneId(mockScriptJson.scenes[0].scene_id)
       }
+      setIsLoading(false)
     }
   }, [])
 
@@ -121,6 +128,15 @@ export default function ScenesPage() {
     }, 1000)
   }
 
+  if(isLoading){
+    <div className="p-8 text-black bg-white ml-64">
+        <div className="flex flex-col items-center justify-center h-64">
+          <h2 className="text-2xl font-bold mb-4 text-black">Đang tải dữ liệu kịch bản...</h2>
+          <p className="text-muted-foreground mb-6 text-black">Vui lòng đợi trong giây lát</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-purple-600"></div>
+        </div>
+    </div>
+  }
   if (!scriptJson) {
     return (
       <div className="p-8 text-black bg-white ml-64">
