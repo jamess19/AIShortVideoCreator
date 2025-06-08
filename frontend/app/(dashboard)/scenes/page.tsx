@@ -129,6 +129,7 @@ export default function ScenesPage() {
   }
 
   if(isLoading){
+    return(
     <div className="p-8 text-black bg-white ml-64">
         <div className="flex flex-col items-center justify-center h-64">
           <h2 className="text-2xl font-bold mb-4 text-black">Đang tải dữ liệu kịch bản...</h2>
@@ -136,6 +137,7 @@ export default function ScenesPage() {
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-purple-600"></div>
         </div>
     </div>
+    )
   }
   if (!scriptJson) {
     return (

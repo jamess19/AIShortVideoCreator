@@ -5,7 +5,19 @@ const api = axios.create({
     baseURL: BASE_URL,
     timeout: 20000,
 });
-
+api.interceptors.request.use(
+    (config) => {
+        const accessToken = localStorage.getItem("accessToken");
+        if (accessToken) {
+            const cleanToken = accessToken.replace(/"/g, '');
+            config.headers.Authorization = `Bearer ${cleanToken}`;
+        }
+        return config;
+    },
+    (error) => {
+        return Promise.reject(error);
+    }
+);
 export const AutoGenerateScriptApi = async (request) => {
     try {
         const response = await api.post("/video_script", request);
