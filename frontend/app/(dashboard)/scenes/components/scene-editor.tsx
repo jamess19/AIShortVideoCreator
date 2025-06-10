@@ -9,22 +9,23 @@ import { BackgroundSelector } from "./background-selector"
 import { VoiceToneSelector } from "./voice-tone-selector"
 import { Sparkles } from "lucide-react"
 import { MusicSelector } from "./music-selector"
+import { Scene } from "@/lib/models"
 
 interface SceneEditorProps {
-  scene: any
+  scene: Scene
   onUpdate: (updatedScene: any) => void
+  handleBackgroundChangeForParent: (background: File) => void
+  handleMusicChangeForParent: (music: File) => void
 }
 
-export function SceneEditor({ scene, onUpdate }: SceneEditorProps) {
+export function SceneEditor({ scene, onUpdate, 
+                              handleBackgroundChangeForParent,
+                              handleMusicChangeForParent }: SceneEditorProps) {
   const [sceneText, setSceneText] = useState(scene.text || "")
 
   const handleTextChange = (text: string) => {
     setSceneText(text)
     onUpdate({ text })
-  }
-
-  const handleBackgroundChange = (background: any) => {
-    onUpdate({ background })
   }
 
   const handleMusicChange = (music: any) => {
@@ -84,11 +85,13 @@ export function SceneEditor({ scene, onUpdate }: SceneEditorProps) {
           </TabsContent>
 
           <TabsContent value="background">
-            <BackgroundSelector currentBackground={scene.background_image} onBackgroundChange={handleBackgroundChange} />
+            <BackgroundSelector 
+              currentBackground={scene.background_image}
+              onBackgroundChange={(background : File) => handleBackgroundChangeForParent(background)} />
           </TabsContent>
 
           <TabsContent value="music">
-            <MusicSelector currentMusic={scene.music} onMusicChange={handleMusicChange} />
+            <MusicSelector currentMusic={scene.background_music} onMusicChange={handleMusicChange} />
           </TabsContent>
 
           <TabsContent value="voice">

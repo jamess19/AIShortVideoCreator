@@ -175,6 +175,7 @@ export function MusicSelector({ currentMusic, onMusicChange }: MusicSelectorProp
               </Label>
               <div className="flex gap-2">
                 <Input
+                  className="bg-white border border-gray-300 focus:border-purple-500 focus:ring-purple-500"
                   id="music-prompt"
                   placeholder="Ví dụ: Nhạc nền vui tươi, sôi động cho video giải trí..."
                   value={aiPrompt}
@@ -230,7 +231,9 @@ export function MusicSelector({ currentMusic, onMusicChange }: MusicSelectorProp
             <div className="flex flex-col items-center justify-center border-2 border-dashed rounded-md p-6 h-32">
               <Upload className="h-6 w-6 text-muted-foreground mb-2" />
               <p className="text-sm text-muted-foreground mb-2">Kéo thả hoặc nhấp để tải lên</p>
-              <Button variant="outline" size="sm" onClick={() => document.getElementById("music-upload")?.click()}>
+              <Button 
+                className="bg-purple-600 hover:bg-purple-700 text-white" 
+                variant="outline" size="sm" onClick={() => document.getElementById("music-upload")?.click()}>
                 Chọn tệp nhạc
               </Button>
               <Input id="music-upload" type="file" className="hidden" accept="audio/*" onChange={handleFileUpload} />

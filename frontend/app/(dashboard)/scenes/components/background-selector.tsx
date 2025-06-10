@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -13,10 +13,11 @@ import { useToast } from "@/hooks/use-toast"
 
 interface BackgroundSelectorProps {
   currentBackground: any
-  onBackgroundChange: (background: any) => void
+  onBackgroundChange: (background: File) => void
 }
 
 export function BackgroundSelector({ currentBackground, onBackgroundChange }: BackgroundSelectorProps) {
+  const imageInputRef = useRef<HTMLInputElement>(null)
   const [activeTab, setActiveTab] = useState<string>("templates")
   const [selectedBackground, setSelectedBackground] = useState<string>(currentBackground?.url ? "custom" : "bg1")
   const [isGeneratingAI, setIsGeneratingAI] = useState(false)
@@ -35,27 +36,20 @@ export function BackgroundSelector({ currentBackground, onBackgroundChange }: Ba
   const handleBackgroundSelect = (bgId: string) => {
     setSelectedBackground(bgId)
 
-    const selectedBg = backgrounds.find((bg) => bg.id === bgId)
-    if (selectedBg) {
-      onBackgroundChange({
-        type: selectedBg.type,
-        ...(selectedBg.type === "solid" ? { color: selectedBg.color } : { url: selectedBg.url }),
-      })
-    }
+    // const selectedBg = backgrounds.find((bg) => bg.id === bgId)
+    // if (selectedBg) {
+    //   onBackgroundChange({
+    //     type: selectedBg.type,
+    //     ...(selectedBg.type === "solid" ? { color: selectedBg.color } : { url: selectedBg.url }),
+    //   })
+    // }
   }
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
-    // In a real app, you would upload this file to a server
-    // For now, we'll create a local URL
-    const imageUrl = URL.createObjectURL(file)
-
-    onBackgroundChange({
-      type: "image",
-      url: imageUrl,
-    })
+    onBackgroundChange(file)
 
     toast({
       title: "Tải lên thành công",
@@ -146,6 +140,7 @@ export function BackgroundSelector({ currentBackground, onBackgroundChange }: Ba
               </Label>
               <div className="flex gap-2">
                 <Input
+                  className="bg-white border border-gray-300 focus:border-purple-500 focus:ring-purple-500"
                   id="ai-prompt"
                   placeholder="Ví dụ: Cảnh biển xanh với bầu trời trong vắt..."
                   value={aiPrompt}
@@ -197,10 +192,15 @@ export function BackgroundSelector({ currentBackground, onBackgroundChange }: Ba
           <div className="flex flex-col items-center justify-center border-2 border-dashed rounded-md p-6 h-40">
             <Upload className="h-8 w-8 text-muted-foreground mb-2" />
             <p className="text-sm text-muted-foreground mb-2">Kéo thả hoặc nhấp để tải lên</p>
-            <Button variant="outline" size="sm" onClick={() => document.getElementById("bg-upload")?.click()}>
+            <Button
+              className="bg-purple-600 hover:bg-purple-700 text-white" 
+              variant="outline" size="sm" onClick={() => imageInputRef.current?.click()}>
               Chọn tệp
             </Button>
-            <Input id="bg-upload" type="file" className="hidden" accept="image/*" onChange={handleFileUpload} />
+            <Input
+              className="hidden"
+              ref={imageInputRef}
+              id="bg-upload" type="file" onChange={handleFileUpload} />
           </div>
 
           {currentBackground?.type === "image" && activeTab === "upload" && (
