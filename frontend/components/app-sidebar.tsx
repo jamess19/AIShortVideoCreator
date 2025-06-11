@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, FileText, Eye, Video, Plus } from "lucide-react";
+import { Home, FileText, Eye, Video, Plus, Layers } from "lucide-react";
 
 export function AppSidebar() {
   const pathname = usePathname();
@@ -21,8 +21,14 @@ export function AppSidebar() {
       active: pathname === "/script",
     },
     {
+      icon: Layers,
+      label: "Cấu hình từng cảnh",
+      href: "/scenes",
+      active: pathname === "/scenes",
+    },
+    {
       icon: Eye,
-      label: "Xem trước",
+      label: "Xem trước video",
       href: "/preview",
       active: pathname === "/preview",
     },

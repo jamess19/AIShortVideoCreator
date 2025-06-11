@@ -7,8 +7,8 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Sparkles, RefreshCw } from "lucide-react"
 import { AutoGenerateScriptApi } from "@/services/video_script_api"
 
-export function ScriptSuggestions() {
-  const [keyword, setKeyword] = useState("")
+export function ScriptSuggestions({selectedContent, SetSelectedScriptForParent}: { selectedContent: any, SetSelectedScriptForParent: (script: string) => void }) {
+  //const [keyword, setKeyword] = useState("")
   const [isGenerating, setIsGenerating] = useState(false)
   const [suggestions, setSuggestions] = useState<string[]>([])
 
@@ -17,7 +17,8 @@ export function ScriptSuggestions() {
     setIsGenerating(true)
 
     const request = {
-        prompt: "Tạo nội dung kịch bản cho 1 video ngắn khoảng 1 phút với nội dung về thực trạng giáo dục tại Việt Nam bằng tiếng Việt. Bạn chỉ cần trả về lời thoại 1 cách liên tục. Không cần gợi ý từng cảnh"
+        content: selectedContent.title,
+        video_duration: 60, // Giả sử video có độ dài 60 giây
     };
     console.log("Request:", request);
     try{
@@ -40,20 +41,22 @@ export function ScriptSuggestions() {
 
   const handleSelectSuggestion = (suggestion: string) => {
     console.log("Selected suggestion:", suggestion)
+    SetSelectedScriptForParent(suggestion)
   }
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-2">
-        <Input
+      <div className="flex justify-between items-center">
+        {/* <Input
           placeholder="Nhập chủ đề hoặc từ khóa..."
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
           className="flex-1 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-        />
+        /> */}
+        <h3 className="font-medium">Gợi ý kịch bản về nội dung đã chọn từ AI</h3>
         <Button
           onClick={generateSuggestions}
-          disabled={isGenerating || !keyword.trim()}
+          disabled={isGenerating || !selectedContent}
           className="bg-purple-600 hover:bg-purple-700"
         >
           {isGenerating ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : <Sparkles className="h-4 w-4 mr-2" />}

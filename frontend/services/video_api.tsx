@@ -18,21 +18,13 @@ api.interceptors.request.use(
         return Promise.reject(error);
     }
 );
-export const AutoGenerateScriptApi = async (request) => {
+
+export const CreateVideoApi = async (request : any) => {
     try {
-        const response = await api.post("/video_script", request);
+        const response = await api.post("/video", request);
         return response.data;
     } catch (error) {
-        console.error("Error generating script:", error);
-        throw error;
-    }
-}
-export const GetVideoScriptMetadataApi = async (request) => {
-    try {
-        const response = await api.post("/video_script/video_metadata", request);
-        return response.data;
-    } catch (error) {
-        console.error("Error getting video metadata:", error);
+        console.error("Error creating video:", error);
         throw error;
     }
 }
