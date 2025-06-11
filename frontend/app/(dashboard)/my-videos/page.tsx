@@ -6,74 +6,109 @@ import {
   Filter,
   Plus,
   MoreVertical,
-  Edit,
-  Share2,
   Eye,
   Clock,
+  Play,
+  Edit,
+  Share2,
 } from "lucide-react";
 import Link from "next/link";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { VideoPlayer } from "@/components/video-player";
+import { VideoThumbnail } from "@/components/video-thumbnail";
+
+interface Video {
+  id: number;
+  title: string;
+  status: "published" | "draft";
+  views: number;
+  timeAgo: string;
+  videoUrl: string;
+  duration?: number;
+}
 
 export default function MyVideosPage() {
   const [activeTab, setActiveTab] = useState("all");
   const [hoveredVideo, setHoveredVideo] = useState<number | null>(null);
+  const [selectedVideo, setSelectedVideo] = useState<{
+    id: number;
+    title: string;
+    videoUrl: string;
+  } | null>(null);
 
   // Dữ liệu mẫu cho các video
-  const videos = [
+  const [videos, setVideos] = useState<Video[]>([
     {
       id: 1,
       title: "Thử thách 30 ngày",
       status: "published",
-      duration: "00:30",
       views: 1240,
       timeAgo: "2 ngày trước",
-      thumbnail: "/placeholder.svg?height=360&width=240",
+      videoUrl:
+        "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4",
     },
     {
       id: 2,
       title: "Mẹo học tiếng Anh hiệu quả",
       status: "published",
-      duration: "00:45",
       views: 850,
       timeAgo: "1 tuần trước",
-      thumbnail: "/placeholder.svg?height=360&width=240",
+      videoUrl:
+        "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4",
     },
     {
       id: 3,
       title: "Review công nghệ mới",
       status: "draft",
-      duration: "00:35",
       views: 0,
       timeAgo: "3 giờ trước",
-      thumbnail: "/placeholder.svg?height=360&width=240",
+      videoUrl:
+        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
     },
     {
       id: 4,
       title: "Hướng dẫn nấu ăn nhanh",
       status: "published",
-      duration: "00:40",
       views: 320,
       timeAgo: "3 ngày trước",
-      thumbnail: "/placeholder.svg?height=360&width=240",
+      videoUrl:
+        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
     },
     {
       id: 5,
       title: "Bí quyết sống khỏe",
       status: "draft",
-      duration: "00:25",
       views: 0,
       timeAgo: "1 ngày trước",
-      thumbnail: "/placeholder.svg?height=360&width=240",
+      videoUrl:
+        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
     },
     {
       id: 6,
       title: "Khám phá địa điểm du lịch",
       status: "published",
-      duration: "00:50",
       views: 720,
       timeAgo: "5 ngày trước",
-      thumbnail: "/placeholder.svg?height=360&width=240",
+      videoUrl:
+        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
     },
-  ];
+  ]);
+
+  const formatDuration = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = Math.floor(seconds % 60);
+    return `${minutes.toString().padStart(2, "0")}:${remainingSeconds
+      .toString()
+      .padStart(2, "0")}`;
+  };
+
+  const handleDurationLoad = (videoId: number, duration: number) => {
+    setVideos((prevVideos) =>
+      prevVideos.map((video) =>
+        video.id === videoId ? { ...video, duration } : video
+      )
+    );
+  };
 
   const filteredVideos = videos.filter((video) => {
     if (activeTab === "all") return true;
@@ -87,6 +122,15 @@ export default function MyVideosPage() {
   ).length;
   const draftCount = videos.filter((video) => video.status === "draft").length;
   const totalCount = videos.length;
+
+  // Xử lý khi click vào video
+  const handleVideoClick = (video: Video) => {
+    setSelectedVideo({
+      id: video.id,
+      title: video.title,
+      videoUrl: video.videoUrl,
+    });
+  };
 
   return (
     <div className="p-8 ml-64">
@@ -161,17 +205,23 @@ export default function MyVideosPage() {
         {filteredVideos.map((video) => (
           <div
             key={video.id}
-            className="bg-gray-100 rounded-md overflow-hidden"
+            className="bg-gray-100 rounded-md overflow-hidden cursor-pointer"
             onMouseEnter={() => setHoveredVideo(video.id)}
             onMouseLeave={() => setHoveredVideo(null)}
+            onClick={() => handleVideoClick(video)}
           >
             <div className="relative aspect-[2/3] bg-gray-700 flex items-center justify-center">
-              <img
-                src={video.thumbnail || "/placeholder.svg"}
+              {/* Video Thumbnail từ frame đầu tiên */}
+              <VideoThumbnail
+                videoUrl={video.videoUrl}
                 alt={video.title}
                 className="w-full h-full object-cover"
+                onDurationLoad={(duration) =>
+                  handleDurationLoad(video.id, duration)
+                }
               />
 
+              {/* Status badge */}
               <div className="absolute top-2 left-2">
                 <span
                   className={`text-xs px-2 py-1 rounded-md ${
@@ -185,7 +235,7 @@ export default function MyVideosPage() {
               </div>
 
               <div className="absolute bottom-2 right-2 bg-black bg-opacity-70 text-white text-xs px-1 py-0.5 rounded">
-                {video.duration}
+                {video.duration ? formatDuration(video.duration) : "00:00"}
               </div>
 
               {hoveredVideo === video.id && (
@@ -204,10 +254,15 @@ export default function MyVideosPage() {
 
             <div className="p-3">
               <div className="flex justify-between items-start mb-2">
-                <h3 className="font-medium text-sm line-clamp-2 text-gray-800">
+                <h3 className="font-medium text-gray-800 text-sm line-clamp-2">
                   {video.title}
                 </h3>
-                <button className="text-gray-500 hover:text-gray-700 ml-1 flex-shrink-0">
+                <button
+                  className="text-gray-500 hover:text-gray-700 ml-1 flex-shrink-0"
+                  onClick={(e) => {
+                    e.stopPropagation(); // Ngăn không cho mở popup khi click vào nút này
+                  }}
+                >
                   <MoreVertical size={16} />
                 </button>
               </div>
@@ -235,6 +290,24 @@ export default function MyVideosPage() {
           </div>
         ))}
       </div>
+
+      {/* Video Player Dialog */}
+      <Dialog
+        open={!!selectedVideo}
+        onOpenChange={(open) => !open && setSelectedVideo(null)}
+      >
+        <DialogContent className="sm:max-w-[800px] p-0 overflow-hidden bg-black">
+          <DialogTitle className="p-4 text-white">
+            {selectedVideo?.title}
+          </DialogTitle>
+          {selectedVideo && (
+            <VideoPlayer
+              videoUrl={selectedVideo.videoUrl}
+              title={selectedVideo.title}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
