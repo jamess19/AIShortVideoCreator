@@ -1,5 +1,5 @@
 import axios from "axios";
-
+import { Voice } from "@/lib/models";
 const BASE_URL = "http://localhost:8000/api/v1";
 const api = axios.create({
     baseURL: BASE_URL,
@@ -33,6 +33,24 @@ export const GetVideoScriptMetadataApi = async (request) => {
         return response.data;
     } catch (error) {
         console.error("Error getting video metadata:", error);
+        throw error;
+    }
+}
+export const GetVoicesApi = async () => {
+    try {
+        const response = await api.get("/video_script/voice");
+        return response.data as Voice[];
+    } catch (error) {
+        console.error("Error fetching voices:", error);
+        throw error;
+    }
+}
+export const GetVoiceByIdApi = async (voiceId: string) => {
+    try {
+        const response = await api.get(`/video_script/voice/${voiceId}`);
+        return response.data as Voice;
+    } catch (error) {
+        console.error("Error fetching voice by ID:", error);
         throw error;
     }
 }

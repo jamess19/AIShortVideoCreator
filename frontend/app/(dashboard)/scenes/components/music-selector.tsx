@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
@@ -11,49 +11,69 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import { Play, Pause, Upload, Sparkles, RefreshCw } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { GetMusicTracksApi } from "@/services/music_api"
+import { MusicTrack } from "@/lib/models"
 
 interface MusicSelectorProps {
   currentMusic: any
-  onMusicChange: (music: any) => void
+  onMusicChange: (content?: File, publicId?: string) => void
 }
 
 export function MusicSelector({ currentMusic, onMusicChange }: MusicSelectorProps) {
   const [activeTab, setActiveTab] = useState<string>("library")
-  const [selectedMusic, setSelectedMusic] = useState<string>(currentMusic?.name || "music1")
-  const [isPlaying, setIsPlaying] = useState<string | null>(null)
+  const [musicTracks, setMusicTracks] = useState<MusicTrack[]>([])
+  const [selectedMusic, setSelectedMusic] = useState<string>("")
+  const [playingMusicId, setPlayingMusicId] = useState<string | null>(null)
   const [musicVolume, setMusicVolume] = useState<number>(50)
   const [isGeneratingAI, setIsGeneratingAI] = useState(false)
   const [aiPrompt, setAiPrompt] = useState("")
   const { toast } = useToast()
+  const audioRef = useRef<HTMLAudioElement | null>(null)
 
-  const musicTracks = [
-    { id: "music1", name: "Upbeat Pop", duration: "0:30" },
-    { id: "music2", name: "Chill Lofi", duration: "0:45" },
-    { id: "music3", name: "Energetic Dance", duration: "0:35" },
-    { id: "music4", name: "Ambient", duration: "0:40" },
-    { id: "music5", name: "Epic Cinematic", duration: "0:50" },
-    { id: "music6", name: "Happy Acoustic", duration: "0:35" },
-  ]
-
-  const togglePlay = (musicId: string) => {
-    if (isPlaying === musicId) {
-      setIsPlaying(null)
-    } else {
-      setIsPlaying(musicId)
+  useEffect(() => {
+    const fetchMusicTracks = async () => {
+      try {
+        const tracks = await GetMusicTracksApi()
+        setMusicTracks(tracks)
+        if (tracks.length > 0) {
+          setSelectedMusic(tracks[0].publicId) // Set default selected music
+        }
+      } catch (error) {
+        console.error("Error fetching music tracks:", error)
+        toast({
+          title: "Lỗi",
+          description: "Không thể tải nhạc nền. Vui lòng thử lại sau.",
+          variant: "destructive",
+        })
+      }
     }
-  }
+    fetchMusicTracks()
+  }, [])
 
   const handleMusicSelect = (musicId: string) => {
     setSelectedMusic(musicId)
 
-    const selectedTrack = musicTracks.find((track) => track.id === musicId)
+    const selectedTrack = musicTracks.find((track) => track.publicId === musicId)
     if (selectedTrack) {
-      onMusicChange({
-        type: "library",
-        name: selectedTrack.name,
-        id: selectedTrack.id,
-      })
+      onMusicChange(undefined, selectedTrack.publicId);
     }
+  }
+  const handlePlayMusicTrack = (track: MusicTrack) => {
+    if (playingMusicId === track.publicId) {
+      audioRef.current?.pause()
+      setPlayingMusicId(null)
+    } else {
+      if (audioRef.current) {
+        audioRef.current.src = track.musicUrl
+        audioRef.current.volume = musicVolume / 100 // Convert to 0-1 range
+        audioRef.current.play()
+        setPlayingMusicId(track.publicId)
+      }
+    }
+  };
+
+  const handleAudioEnded = () => {
+    setPlayingMusicId(null)
   }
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -62,12 +82,7 @@ export function MusicSelector({ currentMusic, onMusicChange }: MusicSelectorProp
 
     // In a real app, you would upload this file to a server
     // For now, we'll just use the file name
-
-    onMusicChange({
-      type: "upload",
-      name: file.name,
-      file: file,
-    })
+    onMusicChange(file, undefined)
 
     toast({
       title: "Tải lên thành công",
@@ -147,24 +162,33 @@ export function MusicSelector({ currentMusic, onMusicChange }: MusicSelectorProp
           <RadioGroup value={selectedMusic} onValueChange={handleMusicSelect} className="space-y-2">
             {musicTracks.map((track) => (
               <div
-                key={track.id}
+                key={track.publicId}
                 className="flex items-center justify-between border rounded-md p-3 hover:border-purple-400 transition-colors"
+                onClick={() => handleMusicSelect(track.publicId)}
               >
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value={track.id} id={track.id} />
-                  <Label htmlFor={track.id} className="cursor-pointer">
+                  <RadioGroupItem value={track.publicId} id={track.publicId} />
+                  <Label htmlFor={track.publicId} className="cursor-pointer">
                     <div>
                       <span className="font-medium">{track.name}</span>
                       <span className="text-xs text-muted-foreground ml-2">({track.duration})</span>
                     </div>
                   </Label>
                 </div>
-                <Button variant="ghost" size="icon" onClick={() => togglePlay(track.id)} className="h-8 w-8">
-                  {isPlaying === track.id ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                <Button
+                  onClick={e =>{
+                    e.stopPropagation();
+                    handlePlayMusicTrack(track);
+                  }} 
+                  variant="ghost" size="icon"
+                  type="button"
+                  className="h-8 w-8">
+                  {playingMusicId === track.publicId ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                 </Button>
               </div>
             ))}
           </RadioGroup>
+          <audio ref={audioRef} onEnded={handleAudioEnded}/>
         </TabsContent>
 
         <TabsContent value="ai" className="space-y-4">

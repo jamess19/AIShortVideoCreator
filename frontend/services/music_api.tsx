@@ -1,9 +1,9 @@
 import axios from "axios";
-
+import { MusicTrack } from "@/lib/models";
 const BASE_URL = "http://localhost:8000/api/v1";
 const api = axios.create({
     baseURL: BASE_URL,
-    timeout: 50000,
+    timeout: 20000,
 });
 api.interceptors.request.use(
     (config) => {
@@ -19,21 +19,12 @@ api.interceptors.request.use(
     }
 );
 
-export const CreateVideoApi = async (request : any) => {
+export const GetMusicTracksApi = async () => {
     try {
-        const response = await api.post("/video", request);
-        return response.data;
+        const response = await api.get("/music_track");
+        return response.data as MusicTrack[];
     } catch (error) {
-        console.error("Error creating video:", error);
-        throw error;
-    }
-}
-export const GetVideoByIdApi = async (videoId: string) => {
-    try {
-        const response = await api.get(`/video/${videoId}`);
-        return response.data;
-    } catch (error) {
-        console.error("Error fetching video by ID:", error);
+        console.error("Error fetching music tracks:", error);
         throw error;
     }
 }
