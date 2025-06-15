@@ -48,6 +48,8 @@ interface BackGroundMusic{
 }
 export default function ScenesPage() {
   const [scriptJson, setScriptJson] = useState<any>(null)
+  const [title, setTitle] = useState<string>("")
+  const [selectedVoiceId, setSelectedVoiceId] = useState<string>("")
   const [backgroundImages, setBackgroundImages] = useState<BackGroundImage[]>([])
   const [backgroundMusics, setBackgroundMusics] = useState<BackGroundMusic[]>([])
   const [activeSceneId, setActiveSceneId] = useState<string>("")
@@ -88,6 +90,19 @@ export default function ScenesPage() {
       }
     }
     const selectedScript = localStorage.getItem("selectedScript")
+    const selectedVoice = localStorage.getItem("selectedVoiceId")
+    const selectedContent = localStorage.getItem("selectedContent")
+    if (selectedVoice) {
+      setSelectedVoiceId(selectedVoice)
+    }
+    if (selectedContent) {
+      try {
+        const content = JSON.parse(selectedContent)
+        setTitle(content.title || "")
+      } catch (error) {
+        console.error("Error parsing selectedContent:", error)
+      }
+    }
     if (selectedScript) {
       const request = {
         script: selectedScript
@@ -135,9 +150,9 @@ export default function ScenesPage() {
     try{
       const video_metaData_json : VideoMetadataJson = {
         script : "",
-        title: "Video Title",
-        userId: "pqkiet854",
-        voiceId: "vi-VN-HoaiMyNeural",
+        title: title || "Video không tiêu đề",
+        userId: localStorage.getItem("username") || "anonymous",
+        voiceId: selectedVoiceId || "vi-VN-HoaiMyNeural",
         videoMetadata:{
           scenes: scriptJson.scenes.map((scene: Scene) => ({
             scene_id: scene.scene_id,
@@ -190,7 +205,7 @@ export default function ScenesPage() {
           description: "Cấu hình cảnh đã được lưu",
         })
   
-        router.push(`/video/${response.publicId}/edit`);
+        router.push(`/video/${response.public_id}/edit`);
       }
       else{
         toast({
@@ -265,6 +280,16 @@ export default function ScenesPage() {
           </Button>
         </div>
       </div>
+      <div className="mb-6">
+        <label className="block text-sm font-medium mb-2">Tiêu đề video</label>
+        <input
+          type="text"
+          className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Nhập tiêu đề video"/>
+      </div>
+
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div className="lg:col-span-1">

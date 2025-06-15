@@ -1,12 +1,12 @@
 import { useVideoContext } from '@/hooks/use-video-context'
 import React, { useEffect, useRef, useState } from 'react'
-import { formatTime, parseTime } from '@/lib/time'
+
 type TimeSliderProps = {
   startTime: number,
   endTime: number,
   type: 'emoji' | 'text' | 'music',
   objectId: string,
-  content: string
+  content: string,
 }
 
 function TimeSlider( {startTime, endTime, type, objectId, content}: TimeSliderProps) {
@@ -23,7 +23,8 @@ function TimeSlider( {startTime, endTime, type, objectId, content}: TimeSliderPr
   const [end, setEnd] = useState(endTime/ videoDuration * 100)
   const [dragging, setDragging] = useState<"start" | "end" | null>(null)
   const timeSliderRef = useRef<HTMLDivElement>(null)
-
+  const startRef = useRef(start)
+  const endRef = useRef(end)
 
   const handleMouseDown = (actionOn: 'start' | 'end') => {
     setDragging(actionOn)
@@ -31,25 +32,27 @@ function TimeSlider( {startTime, endTime, type, objectId, content}: TimeSliderPr
   const handleMouseUp = () => {
     setDragging(null)
     
+    const latestStart = startRef.current
+    const latestEnd = endRef.current
     // Tính toán thời gian thật dựa trên % từ giao diện
-    const newStartTime = start*videoDuration/100
-    const newEndTime = end*videoDuration/100
+    const newStartTime = Math.round((latestStart * videoDuration / 100) * 100) / 100
+    const newEndTime = Math.round((latestEnd * videoDuration / 100) * 100) / 100
 
-    if(type = 'text') {
+    if(type === 'text') {
       updateTextAttachment(objectId, {
         endTime: newEndTime,
         startTime: newStartTime
       })
     }
 
-    if(type = 'emoji') {
+    if(type === 'emoji') {
       updateEmojiAttachment(objectId, {
         startTime: newStartTime,
         endTime: newEndTime
       })
     }
 
-    if(type = 'music') {
+    if(type === 'music') {
       updateMusicAttachment(objectId, {
         startTime: newStartTime,
         endTime: newEndTime
@@ -64,13 +67,15 @@ function TimeSlider( {startTime, endTime, type, objectId, content}: TimeSliderPr
     const percentage = (x/rect?.width!) * 100
     const clamped = Math.min(100, Math.max(0,percentage))
 
-    if (dragging === "start") 
-    {
-    setStart(Math.min(clamped, end - 1))
-    } 
-    else {
-    setEnd(Math.max(clamped, start + 1))
-    };
+    if (dragging === 'start') {
+      const next = Math.min(clamped, endRef.current - 1);
+      setStart(next);
+      startRef.current = next;
+    } else {
+      const next = Math.max(clamped, startRef.current + 1);
+      setEnd(next);
+      endRef.current = next;
+    }
   } 
   useEffect(() => {
     if (dragging) {

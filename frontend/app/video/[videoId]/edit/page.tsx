@@ -19,23 +19,23 @@ export default function EditVideoPage() {
     }
     const fetchVideoData = async () => {
       const videoDataResponse = await GetVideoByIdApi(videoId);
-      
+      console.log("Video data response:", videoDataResponse);
       if(!videoDataResponse) {
         console.error("Video data not found");
         return;
       }
       const videoData: VideoData = {
-        videoId: videoDataResponse.id,
+        videoId: videoDataResponse.public_id,
         videoUrl: videoDataResponse.video_url,
         title: videoDataResponse.title,
-        duration: 0, // Duration will be set after fetching metadata
+        duration: videoDataResponse.duration,
         currentTime: 0
       };
       setVideoData(videoData);
     }
 
     fetchVideoData();
-  }, []);
+  }, [videoId, setVideoData]);
   return (
         <div className="p-5 md:px-24 lg:px-32">
           <div className="grid grid-cols-6 gap-2 justify-center">

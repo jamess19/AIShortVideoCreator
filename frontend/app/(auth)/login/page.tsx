@@ -24,6 +24,7 @@ export default function LoginPage() {
     if(response) {
       if(response.status === "success") {
         localStorage.setItem("accessToken", response.access_token);
+        localStorage.setItem("username", response.username);
         console.log("Login successful", response.message);
         router.push("/");
       }

@@ -12,10 +12,11 @@ import TrendingSearch from "./components/trending-search";
 import { useRouter } from "next/navigation";
 import { Voice } from "@/lib/models";
 import { GetVoicesApi, GetVoiceByIdApi } from "@/services/video_script_api";
+import { Input } from "@/components/ui/input";
 
 export default function ScriptPage() {
   const router = useRouter();
-  const [selectedVoice, setSelectedVoice] = useState("minh-anh");
+  const [selectedVoiceId, setSelectedVoiceId] = useState("minh-anh");
   const [scriptDuration, setScriptDuration] = useState(30);
   const [volumeLevel, setVolumeLevel] = useState(80);
   const [selectedContent, setSelectedContent] = useState<any>(null);
@@ -31,7 +32,7 @@ export default function ScriptPage() {
         const voiceList = await GetVoicesApi();
         setVoices(voiceList);
         if (voiceList.length > 0) {
-          setSelectedVoice(voiceList[0].voiceId); // Set default voice
+          setSelectedVoiceId(voiceList[0].voiceId); // Set default voice
         }
       } catch (error) {
         console.error("Error fetching voices:", error);
@@ -60,6 +61,8 @@ export default function ScriptPage() {
   const HandleNextStep = () => {
     if (selectedScript) {
       localStorage.setItem("selectedScript", selectedScript);
+      localStorage.setItem("selectedVoiceId", selectedVoiceId);
+      localStorage.setItem("selectedContent", JSON.stringify(selectedContent));
       router.push("/scenes");
     } else {
       console.warn("No script selected");
@@ -77,7 +80,7 @@ export default function ScriptPage() {
           <div className="p-3 bg-purple-50 rounded-md border border-purple-200 mb-6">
             <div className="flex items-center">
               <TrendingUp className="h-4 w-4 text-purple-600 mr-2" />
-              <span className="text-sm font-medium text-purple-800">Nội dung đã chọn: </span>
+              <span className="text-sm font-medium text-purple-800">Nội dung đã chọn (sẽ được chọn làm tiêu đề video): </span>
               <span className="text-sm text-purple-700 ml-1">{selectedContent.title}</span>
             </div>
           </div>
@@ -157,21 +160,21 @@ export default function ScriptPage() {
               <div
                 key={voice.voiceId}
                 className={`p-4 border rounded-lg flex items-center justify-between cursor-pointer ${
-                  selectedVoice === voice.voiceId
+                  selectedVoiceId === voice.voiceId
                     ? "border-purple-500 bg-purple-50"
                     : "border-gray-200"
                 }`}
-                onClick={() => setSelectedVoice(voice.voiceId)}
+                onClick={() => setSelectedVoiceId(voice.voiceId)}
               >
                 <div className="flex items-center">
                   <div
                     className={`w-5 h-5 rounded-full border flex items-center justify-center ${
-                      selectedVoice === voice.voiceId
+                      selectedVoiceId === voice.voiceId
                         ? "border-purple-600"
                         : "border-gray-400"
                     }`}
                   >
-                    {selectedVoice === voice.voiceId && (
+                    {selectedVoiceId === voice.voiceId && (
                       <div className="w-3 h-3 rounded-full bg-purple-600"></div>
                     )}
                   </div>
