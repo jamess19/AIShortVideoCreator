@@ -109,6 +109,10 @@ export const uploadVideoApi = async (upload_video: any, youtubeToken: string) =>
     }
     catch (error) {
         console.log(error);
+        throw error;
+    }
+}
+
 export const EditVideoApi = async (request: any) =>{
     try {
         const response = await api.put(`/video/${request.videoId}`, request);
