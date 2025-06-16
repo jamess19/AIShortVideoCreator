@@ -20,8 +20,8 @@ export function TrendingContent({ contents, onSelect }: TrendingContentProps) {
     { id: "tiktok", name: "TikTok" },
   ]
 
-  const filteredContents =
-    selectedPlatform === "all" ? contents : contents.filter((content) => content.platform === selectedPlatform)
+  // const filteredContents =
+  //   selectedPlatform === "all" ? contents : contents.filter((content) => content.platform === selectedPlatform)
 
   const getPlatformIcon = (platform: string) => {
     switch (platform) {
@@ -43,7 +43,7 @@ export function TrendingContent({ contents, onSelect }: TrendingContentProps) {
 
   return (
     <div>
-      <div className="flex flex-wrap gap-2 mb-6">
+      {/* <div className="flex flex-wrap gap-2 mb-6">
         {platforms.map((platform) => (
           <Badge
             key={platform.id}
@@ -56,26 +56,26 @@ export function TrendingContent({ contents, onSelect }: TrendingContentProps) {
             {platform.name}
           </Badge>
         ))}
-      </div>
+      </div> */}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredContents.map((content) => (
+        {contents.map((content) => (
           <Card key={content.id} className="overflow-hidden hover:shadow-md transition-shadow">
             <CardContent className="p-0">
               <img
-                src={content.thumbnail || "/placeholder.svg"}
+                src={content.thumbnailUrl || "/placeholder.svg"}
                 alt={content.title}
                 className="w-full h-32 object-cover"
               />
               <div className="p-4">
                 <div className="flex justify-between items-center mb-2">
-                  <div className="flex items-center">
+                  {/* <div className="flex items-center">
                     {getPlatformIcon(content.platform)}
                     <Badge variant="outline" className="text-xs ml-2">
                       #{content.trending_rank}
                     </Badge>
-                  </div>
-                  <span className="text-xs text-muted-foreground">{content.views} lượt xem</span>
+                  </div> */}
+                  <span className="text-xs text-muted-foreground">{content.viewCount} lượt xem</span>
                 </div>
                 <h3 className="font-medium mb-2">{content.title}</h3>
                 <Button

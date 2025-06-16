@@ -1,17 +1,19 @@
 "use client"
 
 import { Card, CardContent } from "@/components/ui/card"
-import { Youtube, Facebook } from "lucide-react"
+import { Youtube } from "lucide-react"
 
-interface PlatformStatsProps {
-  platforms: {
-    youtube: { videos: number; views: number; subscribers: number }
-    tiktok: { videos: number; views: number; followers: number }
-    facebook: { videos: number; views: number; followers: number }
+interface StatsDataProps {
+  stats: {
+  totalVideos: number,
+  totalViews: number,
+  totalLikes: number,
+  totalFavorites: number,
+  totalComments: number
   }
 }
 
-export function PlatformStats({ platforms }: PlatformStatsProps) {
+export function PlatformStats({stats}: StatsDataProps) {
   const formatNumber = (num: number) => {
     if (num >= 1000000) {
       return (num / 1000000).toFixed(1) + "M"
@@ -28,32 +30,10 @@ export function PlatformStats({ platforms }: PlatformStatsProps) {
       icon: Youtube,
       color: "text-red-600",
       bgColor: "bg-red-100",
-      data: platforms.youtube,
-      followerLabel: "subscribers",
-    },
-    {
-      name: "TikTok",
-      icon: () => (
-        <svg className="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
-        </svg>
-      ),
-      color: "text-black",
-      bgColor: "bg-gray-100",
-      data: platforms.tiktok,
-      followerLabel: "followers",
-    },
-    {
-      name: "Facebook",
-      icon: Facebook,
-      color: "text-blue-600",
-      bgColor: "bg-blue-100",
-      data: platforms.facebook,
-      followerLabel: "followers",
+      data: stats,
     },
   ]
-
-  return (
+return (
     <div className="space-y-4">
       {platformData.map((platform, index) => (
         <Card key={index} className="border-l-4 border-l-purple-500">
@@ -65,21 +45,29 @@ export function PlatformStats({ platforms }: PlatformStatsProps) {
                 </div>
                 <div>
                   <h3 className="font-medium">{platform.name}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {formatNumber(platform.data[platform.followerLabel as keyof typeof platform.data])}{" "}
-                    {platform.followerLabel}
-                  </p>
                 </div>
               </div>
 
               <div className="flex space-x-6 text-right">
                 <div>
                   <p className="text-sm text-muted-foreground">Video</p>
-                  <p className="font-bold">{platform.data.videos}</p>
+                  <p className="font-bold">{platform.data.totalVideos}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Lượt xem</p>
-                  <p className="font-bold">{formatNumber(platform.data.views)}</p>
+                  <p className="font-bold">{formatNumber(platform.data.totalViews)}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Like</p>
+                  <p className="font-bold">{formatNumber(platform.data.totalLikes)}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Favorite</p>
+                  <p className="font-bold">{formatNumber(platform.data.totalFavorites)}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Comment</p>
+                  <p className="font-bold">{formatNumber(platform.data.totalComments)}</p>
                 </div>
               </div>
             </div>

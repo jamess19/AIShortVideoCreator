@@ -1,14 +1,15 @@
 "use client"
 
 import { Card, CardContent } from "@/components/ui/card"
-import { VideoIcon, Eye, Heart, Share2 } from "lucide-react"
+import { VideoIcon, Eye, Heart, Star, Share2 } from "lucide-react"
 
 interface StatsOverviewProps {
   stats: {
-    totalVideos: number
-    totalViews: number
-    totalLikes: number
-    totalShares: number
+  totalVideos: number,
+  totalViews: number,
+  totalLikes: number,
+  totalFavorites: number,
+  totalComments: number
   }
 }
 
@@ -41,7 +42,7 @@ export function StatsOverview({ stats }: StatsOverviewProps) {
       change: "+23%",
     },
     {
-      title: "Tổng lượt thích",
+      title: "Tổng lượt Like",
       value: formatNumber(stats.totalLikes),
       icon: Heart,
       color: "text-red-600",
@@ -49,8 +50,16 @@ export function StatsOverview({ stats }: StatsOverviewProps) {
       change: "+18%",
     },
     {
-      title: "Tổng lượt chia sẻ",
-      value: formatNumber(stats.totalShares),
+      title: "Tổng lượt yêu thích",
+      value: formatNumber(stats.totalFavorites),
+      icon: Star,
+      color: "text-yellow-600",
+      bgColor: "bg-yellow-100",
+      change: "+18%",
+    },
+    {
+      title: "Tổng lượt comment",
+      value: formatNumber(stats.totalComments),
       icon: Share2,
       color: "text-green-600",
       bgColor: "bg-green-100",
@@ -59,7 +68,7 @@ export function StatsOverview({ stats }: StatsOverviewProps) {
   ]
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
       {statItems.map((item, index) => (
         <Card key={index}>
           <CardContent className="p-6">
