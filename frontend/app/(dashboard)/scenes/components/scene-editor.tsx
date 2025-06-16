@@ -14,8 +14,8 @@ import { Scene } from "@/lib/models"
 interface SceneEditorProps {
   scene: Scene
   onUpdate: (updatedScene: any) => void
-  handleBackgroundChangeForParent: (background: File) => void
-  handleMusicChangeForParent: (music: File) => void
+  handleBackgroundChangeForParent: (content?: File, publicId?: string) => void
+  handleMusicChangeForParent: (content?: File, publicId?: string) => void
 }
 
 export function SceneEditor({ scene, onUpdate, 
@@ -27,11 +27,6 @@ export function SceneEditor({ scene, onUpdate,
     setSceneText(text)
     onUpdate({ text })
   }
-
-  const handleMusicChange = (music: any) => {
-    onUpdate({ music })
-  }
-
   const handleVoiceToneChange = (voiceTone: string) => {
     onUpdate({ voiceTone })
   }
@@ -86,12 +81,12 @@ export function SceneEditor({ scene, onUpdate,
 
           <TabsContent value="background">
             <BackgroundSelector 
-              currentBackground={scene.background_image}
-              onBackgroundChange={(background : File) => handleBackgroundChangeForParent(background)} />
+              currentBackground={scene.bg_image_public_id}
+              onBackgroundChange={(content?: File, publicId?: string) => handleBackgroundChangeForParent(content, publicId)} />
           </TabsContent>
 
           <TabsContent value="music">
-            <MusicSelector currentMusic={scene.background_music} onMusicChange={handleMusicChange} />
+            <MusicSelector currentMusic={scene.bg_music_public_id} onMusicChange={(content?: File, publicId? : string) => handleMusicChangeForParent(content,publicId)} />
           </TabsContent>
 
           <TabsContent value="voice">

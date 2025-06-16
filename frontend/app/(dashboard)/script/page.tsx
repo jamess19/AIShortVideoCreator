@@ -1,33 +1,68 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Clock, Play, Volume2, ArrowRight, TrendingUp
+import { Clock, Play, Pause, Volume2, ArrowRight, TrendingUp
  } from "lucide-react";
 import { ScriptSuggestions } from "./components/script-suggestion";
 import TrendingSearch from "./components/trending-search";
 import { useRouter } from "next/navigation";
+import { Voice } from "@/lib/models";
+import { GetVoicesApi, GetVoiceByIdApi } from "@/services/video_script_api";
+import { Input } from "@/components/ui/input";
 
 export default function ScriptPage() {
   const router = useRouter();
-  const [selectedVoice, setSelectedVoice] = useState("minh-anh");
+  const [selectedVoiceId, setSelectedVoiceId] = useState("minh-anh");
   const [scriptDuration, setScriptDuration] = useState(30);
   const [volumeLevel, setVolumeLevel] = useState(80);
   const [selectedContent, setSelectedContent] = useState<any>(null);
   const [selectedScript, setSelectedScript] = useState<string>("");
+  const [voices, setVoices] = useState<Voice[]>([]);
+  const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const voices = [
-    { id: "minh-anh", name: "Minh Anh", gender: "Nữ" },
-    { id: "hoang-nam", name: "Hoàng Nam", gender: "Nam" },
-    { id: "thu-ha", name: "Thu Hà", gender: "Nữ" },
-    { id: "quang-minh", name: "Quang Minh", gender: "Nam" },
-  ];
+  // Fetch voices on component mount
+  useState(() => {
+    const fetchVoices = async () => {
+      try {
+        const voiceList = await GetVoicesApi();
+        setVoices(voiceList);
+        if (voiceList.length > 0) {
+          setSelectedVoiceId(voiceList[0].voiceId); // Set default voice
+        }
+      } catch (error) {
+        console.error("Error fetching voices:", error);
+      }
+    };
+    fetchVoices();
+  }, []);
+
+  const handlePlaySample = (voice: Voice) => {
+    if (playingVoiceId === voice.voiceId) {
+      // Nếu đang phát thì dừng lại
+      audioRef.current?.pause();
+      setPlayingVoiceId(null);
+    } else {
+      if (audioRef.current) {
+        audioRef.current.src = voice.sampleVoiceUrl;
+        audioRef.current.play();
+        setPlayingVoiceId(voice.voiceId);
+      }
+    }
+  };
+  const handleAudioEnded = () => {
+    setPlayingVoiceId(null);
+  }
+
   const HandleNextStep = () => {
     if (selectedScript) {
       localStorage.setItem("selectedScript", selectedScript);
+      localStorage.setItem("selectedVoiceId", selectedVoiceId);
+      localStorage.setItem("selectedContent", JSON.stringify(selectedContent));
       router.push("/scenes");
     } else {
       console.warn("No script selected");
@@ -45,7 +80,7 @@ export default function ScriptPage() {
           <div className="p-3 bg-purple-50 rounded-md border border-purple-200 mb-6">
             <div className="flex items-center">
               <TrendingUp className="h-4 w-4 text-purple-600 mr-2" />
-              <span className="text-sm font-medium text-purple-800">Nội dung đã chọn: </span>
+              <span className="text-sm font-medium text-purple-800">Nội dung đã chọn (sẽ được chọn làm tiêu đề video): </span>
               <span className="text-sm text-purple-700 ml-1">{selectedContent.title}</span>
             </div>
           </div>
@@ -123,36 +158,49 @@ export default function ScriptPage() {
           <div className="space-y-3">
             {voices.map((voice) => (
               <div
-                key={voice.id}
+                key={voice.voiceId}
                 className={`p-4 border rounded-lg flex items-center justify-between cursor-pointer ${
-                  selectedVoice === voice.id
+                  selectedVoiceId === voice.voiceId
                     ? "border-purple-500 bg-purple-50"
                     : "border-gray-200"
                 }`}
-                onClick={() => setSelectedVoice(voice.id)}
+                onClick={() => setSelectedVoiceId(voice.voiceId)}
               >
                 <div className="flex items-center">
                   <div
                     className={`w-5 h-5 rounded-full border flex items-center justify-center ${
-                      selectedVoice === voice.id
+                      selectedVoiceId === voice.voiceId
                         ? "border-purple-600"
                         : "border-gray-400"
                     }`}
                   >
-                    {selectedVoice === voice.id && (
+                    {selectedVoiceId === voice.voiceId && (
                       <div className="w-3 h-3 rounded-full bg-purple-600"></div>
                     )}
                   </div>
-                  <span className="ml-3 font-medium">{voice.name}</span>
+                  <span className="ml-3 font-medium">{voice.voiceId}</span>
                   <span className="ml-2 text-gray-500 text-sm">
-                    ({voice.gender})
+                    ({voice.gender === 'Female' ? 'Nữ' : 'Nam'})
                   </span>
                 </div>
-                <Button size="icon" variant="ghost" className="h-8 w-8">
-                  <Play className="h-4 w-4" />
+                <Button 
+                  size="icon" variant="ghost" className="h-8 w-8"
+                  type="button"
+                  onClick={e =>{
+                    e.stopPropagation();
+                    handlePlaySample(voice);
+                  }}>
+
+                  {playingVoiceId === voice.voiceId ? (
+                    <Pause className="h-4 w-4" />
+                  ) : (
+                    <Play className="h-4 w-4" />
+                  )}
                 </Button>
               </div>
             ))}
+            {/* Audio element dùng để phát sample */}
+            <audio ref={audioRef} onEnded={handleAudioEnded} />
           </div>
 
           <div className="mt-6 flex items-center gap-2">

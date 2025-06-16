@@ -3,7 +3,7 @@ import axios from "axios";
 const BASE_URL = "http://localhost:8000/api/v1";
 const api = axios.create({
     baseURL: BASE_URL,
-    timeout: 20000,
+    //timeout: 50000,
 });
 api.interceptors.request.use(
     (config) => {
@@ -25,6 +25,24 @@ export const CreateVideoApi = async (request : any) => {
         return response.data;
     } catch (error) {
         console.error("Error creating video:", error);
+        throw error;
+    }
+}
+export const EditVideoApi = async (request: any) =>{
+    try {
+        const response = await api.put(`/video/${request.videoId}`, request);
+        return response.data;
+    } catch (error) {
+        console.error("Error updating video:", error);
+        throw error;
+    }
+}
+export const GetVideoByIdApi = async (videoId: string) => {
+    try {
+        const response = await api.get(`/video/${videoId}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching video by ID:", error);
         throw error;
     }
 }

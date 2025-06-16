@@ -34,10 +34,24 @@ const mockScriptJson = {
         },
     ],
 }
+interface BackGroundImage{
+  type: string
+  publicId?: string
+  content? : File
+  sceneId: number
+}
+interface BackGroundMusic{
+  type: string
+  publicId?: string
+  content? : File
+  sceneId: number
+}
 export default function ScenesPage() {
   const [scriptJson, setScriptJson] = useState<any>(null)
-  const [backgroundImages, setBackgroundImages] = useState<File[]>([])
-  const [backgroundMusics, setBackgroundMusics] = useState<File[]>([])
+  const [title, setTitle] = useState<string>("")
+  const [selectedVoiceId, setSelectedVoiceId] = useState<string>("")
+  const [backgroundImages, setBackgroundImages] = useState<BackGroundImage[]>([])
+  const [backgroundMusics, setBackgroundMusics] = useState<BackGroundMusic[]>([])
   const [activeSceneId, setActiveSceneId] = useState<string>("")
   const [isSaving, setIsSaving] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
@@ -76,6 +90,19 @@ export default function ScenesPage() {
       }
     }
     const selectedScript = localStorage.getItem("selectedScript")
+    const selectedVoice = localStorage.getItem("selectedVoiceId")
+    const selectedContent = localStorage.getItem("selectedContent")
+    if (selectedVoice) {
+      setSelectedVoiceId(selectedVoice)
+    }
+    if (selectedContent) {
+      try {
+        const content = JSON.parse(selectedContent)
+        setTitle(content.title || "")
+      } catch (error) {
+        console.error("Error parsing selectedContent:", error)
+      }
+    }
     if (selectedScript) {
       const request = {
         script: selectedScript
@@ -105,41 +132,57 @@ export default function ScenesPage() {
     setScriptJson(updatedScript)
     localStorage.setItem("selectedScript", JSON.stringify(updatedScript))
   }
-  const handleBackgroundChange = (sceneId: number, background: File) => {
-    setBackgroundImages(prev => {
+  const handleBackgroundChange = (sceneId: number, content?: File, publicId?: string) => {
+    setBackgroundImages((prev) => {
       const next = [...prev];
-      next[sceneId-1] = background;
-      return next;
-    });
-  }
-  const handleMusicChange = (sceneId: number, music: File) => {
-    setBackgroundMusics((prev) => {
-      const next = [...prev];
-      next[sceneId-1] = music;
-      return [...prev]
+      next[sceneId-1] = { type: "image", publicId, content, sceneId: sceneId };
+      return [...next]
     })
   }
-
+  const handleMusicChange = (sceneId: number, content?: File, publicId?: string) => {
+    setBackgroundMusics((prev) => {
+      const next = [...prev];
+      next[sceneId-1] = { type: "music", publicId, content: content, sceneId: sceneId };
+      return [...next]
+    })
+  }
   const saveAndContinue = async () => {
     try{
       const video_metaData_json : VideoMetadataJson = {
         script : "",
-        title: "Video Title",
-        userId: "pqkiet854",
+        title: title || "Video không tiêu đề",
+        userId: localStorage.getItem("username") || "anonymous",
+        voiceId: selectedVoiceId || "vi-VN-HoaiMyNeural",
         videoMetadata:{
           scenes: scriptJson.scenes.map((scene: Scene) => ({
             scene_id: scene.scene_id,
             start_time: scene.start_time,
             end_time: scene.end_time,
             text: scene.text,
-            background_image: backgroundImages[scene.scene_id - 1]?.name || "",
-            background_music: backgroundMusics[scene.scene_id - 1]?.name || "",
+            bg_image_public_id: backgroundImages[scene.scene_id - 1]?.publicId || "",
+            bg_music_public_id: backgroundMusics[scene.scene_id - 1]?.publicId || "",
+            bg_image_file_index: -1,
+            bg_music_file_index: -1,
           })),
         }
       }
-      const background_images : File[] = backgroundImages.filter((image) => image !== undefined && image !== null);
-      const background_musics : File[] = backgroundMusics.filter((music) => music !== undefined && music !== null);
 
+      const background_images : File[] = [];
+      backgroundImages.forEach((bg, index) => {
+        if (bg &&  bg.content) {
+          background_images.push(bg.content);
+          video_metaData_json.videoMetadata.scenes[bg.sceneId - 1].bg_image_file_index = background_images.length - 1;
+        }
+      });
+
+      const background_musics : File[] = [];
+      backgroundMusics.forEach((bg, index) => {
+        if (bg && bg.content) {
+          background_musics.push(bg.content);
+          video_metaData_json.videoMetadata.scenes[bg.sceneId - 1].bg_music_file_index = background_musics.length - 1;
+        }
+      });
+      
       const request: FormData = new FormData();
       request.append("video_metaData_json", JSON.stringify(video_metaData_json));
       Array.from(background_images).forEach((image) => {
@@ -156,12 +199,13 @@ export default function ScenesPage() {
       }
 
       const response = await CreateVideoApi(request)
-      if(response && response.secure_url !== "error"){
+      if(response && response.secure_url !== ""){
         toast({
           title: "Lưu thành công",
           description: "Cấu hình cảnh đã được lưu",
         })
-        router.push("/preview")
+  
+        router.push(`/video/${response.public_id}/edit`);
       }
       else{
         toast({
@@ -236,6 +280,16 @@ export default function ScenesPage() {
           </Button>
         </div>
       </div>
+      <div className="mb-6">
+        <label className="block text-sm font-medium mb-2">Tiêu đề video</label>
+        <input
+          type="text"
+          className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Nhập tiêu đề video"/>
+      </div>
+
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div className="lg:col-span-1">
@@ -279,8 +333,8 @@ export default function ScenesPage() {
           {scriptJson.scenes.map((scene: any) => (
             <div key={scene.scene_id} className={activeSceneId === scene.scene_id ? "block" : "hidden"}>
               <SceneEditor scene={scene} 
-                handleBackgroundChangeForParent={(background : File) => handleBackgroundChange(scene.scene_id, background)}
-                handleMusicChangeForParent={(music: File) => handleMusicChange(scene.scene_id, music)}
+                handleBackgroundChangeForParent={(content?: File, publicId?: string) => handleBackgroundChange(scene.scene_id, content, publicId)}
+                handleMusicChangeForParent={(content?: File, publicId? : string) => handleMusicChange(scene.scene_id, content,publicId)}
                 onUpdate={(updatedScene) => handleSceneUpdate(scene.scene_id, updatedScene)} />
             </div>
           ))}

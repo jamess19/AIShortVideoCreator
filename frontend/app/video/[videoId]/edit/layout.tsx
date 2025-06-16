@@ -11,11 +11,7 @@ export default async function EditVideoLayout({
 
   return (
     <VideoProvider videoId={videoId}>
-      <html lang="en">
-        <body>
-          {children}
-        </body>
-      </html>
+      {children}
     </VideoProvider>
   );
 }

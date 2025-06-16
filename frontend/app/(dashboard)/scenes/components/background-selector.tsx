@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast"
 
 interface BackgroundSelectorProps {
   currentBackground: any
-  onBackgroundChange: (background: File) => void
+  onBackgroundChange: (content?: File, publicId?: string) => void
 }
 
 export function BackgroundSelector({ currentBackground, onBackgroundChange }: BackgroundSelectorProps) {
@@ -49,7 +49,7 @@ export function BackgroundSelector({ currentBackground, onBackgroundChange }: Ba
     const file = e.target.files?.[0]
     if (!file) return
 
-    onBackgroundChange(file)
+    onBackgroundChange(file, undefined)
 
     toast({
       title: "Tải lên thành công",
