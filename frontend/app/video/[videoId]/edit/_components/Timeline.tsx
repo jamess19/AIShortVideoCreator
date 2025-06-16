@@ -73,19 +73,25 @@ export default function Timeline() {
     <div className="overflow-y-auto overflow-x-hidden max-h-64 space-y-2">
       <div>
       {attachments.emojis.map((emoji) => (
-        <TimeSlider startTime={emoji.startTime} endTime={emoji.endTime} type="emoji" objectId={emoji.id} content={emoji.codepoint}/>
+        <TimeSlider
+          key={emoji.id}
+         startTime={emoji.startTime} endTime={emoji.endTime} type="emoji" objectId={emoji.id} content={emoji.codepoint}/>
       ))}
       </div>
 
       <div>
         {attachments.texts.map((text) => (
-          <TimeSlider startTime={text.startTime} endTime={text.endTime} type="text" objectId={text.id} content={text.content}/>
+          <TimeSlider 
+            key={text.id}
+            startTime={text.startTime} endTime={text.endTime} type="text" objectId={text.id} content={text.content}/>
         ))}
       </div>
 
       <div>
         {attachments.musics.map((music) => (
-          <TimeSlider startTime={music.startTime} endTime={music.endTime} type="music" objectId={music.id} content={music.title}/>
+          <TimeSlider 
+            key={music.id}
+            startTime={music.startTime} endTime={music.endTime} type="music" objectId={music.id} content={music.title}/>
         ))}
       </div>
     </div>

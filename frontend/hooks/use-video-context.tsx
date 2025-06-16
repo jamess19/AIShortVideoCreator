@@ -112,7 +112,7 @@ export function VideoProvider(
             id: "text-1",
             content: "Xin chào!",
             startTime: 1,
-            endTime: 20,
+            endTime: 5,
             position: { x: 50, y: 40 },
             style: {
                 fontSize: 40,
@@ -122,8 +122,8 @@ export function VideoProvider(
         {
             id: "text-2",
             content: "Chào mừng đến với Remotion!",
-            startTime: 10,
-            endTime: 30,
+            startTime: 1,
+            endTime: 5,
             position: { x: 50, y: 60 },
             style: {
               fontSize: 32,
@@ -136,16 +136,16 @@ export function VideoProvider(
         {
             id: "emoji-1",
             codepoint: "1f600", // 😀
-            startTime: 10,
-            endTime: 50,
+            startTime: 6,
+            endTime: 10,
             size: 64,
             position: { x: 20, y: 50 }
           },
           {
             id: "emoji-2",
             codepoint: "1f389", // 🎉
-            startTime: 10,
-            endTime: 50,
+            startTime: 6,
+            endTime: 10,
             size: 72,
             position: { x: 80, y: 30 }
           }
@@ -178,8 +178,10 @@ export function VideoProvider(
           //   }
           
           const sampleVideo: VideoData = {
-              videoId: videoId || '123',
-              videoUrl: "https://res.cloudinary.com/dzgatscqu/video/upload/v1746938916/NO%CC%9BI_NA%CC%80Y_CO%CC%81_ANH_-_SO%CC%9BN_TU%CC%80NG_MTP_gcjobl.mp4", // Sample MP4 URL
+              //videoId: videoId || '123',
+              videoId: "frw9yygyifxosrjcef5p",
+              videoUrl: "https://res.cloudinary.com/di5laqjan/video/upload/v1749793903/frw9yygyifxosrjcef5p.mp4",
+              //videoUrl: "https://res.cloudinary.com/dzgatscqu/video/upload/v1746938916/NO%CC%9BI_NA%CC%80Y_CO%CC%81_ANH_-_SO%CC%9BN_TU%CC%80NG_MTP_gcjobl.mp4", // Sample MP4 URL
               title: 'Sample Video',
               duration: 0,
               currentTime: 0
@@ -191,7 +193,7 @@ export function VideoProvider(
           };
       
           if (videoId) {
-            getVideoById(videoId);
+            //getVideoById(videoId);
           } else {
             setIsLoading(false);
           }

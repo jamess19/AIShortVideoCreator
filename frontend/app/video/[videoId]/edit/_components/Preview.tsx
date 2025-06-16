@@ -1,26 +1,76 @@
-import React, { useEffect,useRef, useState } from 'react';
-import {Player, PlayerRef} from '@remotion/player';
+import React, {  useState } from 'react';
+import {Player} from '@remotion/player';
 import { MyVideo } from './RemotionVideo';
-import { Fullscreen, Play, Pause, SkipBack, SkipForward } from 'lucide-react';
+import { Fullscreen, Save, Loader2, Check, Edit } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select"
 import { useVideoContext } from '@/hooks/use-video-context';
 import { Button } from '@/components/ui/button';
 import DownloadVideo from './DownloadVideo';
 import Timeline from './Timeline';
-import { formatTime } from '@/lib/time';
+import { EditVideoApi } from '@/services/video_api';
+import { text } from 'stream/consumers';
 
 function Preview() {
   const [screenSize, setScreenSize] = useState({
-    width:800,
-    height:500
-  })
-  const {videoData, isLoading, attachments, playerRef} = useVideoContext()
+                                width:800,
+                                height:500
+                              })
+  const {videoData, isLoading, attachments,
+       playerRef} = useVideoContext()
   const [isPlaying, setIsPlaying] = useState(false)
+  const[isSaving, setIsSaving] = useState(false)
+  const [isSaved, setIsSaved] = useState(false);
 
-  const handleSeek = (time: number) => {
-  const frame = Math.floor(time * 30);
-  playerRef.current?.seekTo(frame);
-};
+
+//   const handleSeek = (time: number) => {
+//   const frame = Math.floor(time * 30);
+//   playerRef.current?.seekTo(frame);
+// };
+  const HandleSaveVideo = async () => {
+    if (!videoData) return;
+    setIsSaving(true);
+    try {
+      const request = {
+        public_id: videoData.videoId,
+        userId: localStorage.getItem('username') || 'anonymous',
+        text_attachments: attachments.texts.map((text_attachment) => ({
+          text: text_attachment.content,
+          start_time: text_attachment.startTime,
+          end_time: text_attachment.endTime,
+          position: {
+            x: text_attachment.position.x,
+            y: text_attachment.position.y,
+          },
+          font_size: text_attachment.style.fontSize,
+          color: text_attachment.style.color,
+        })),
+        emoji_attachments: attachments.emojis.map((emoji_attachment) => ({
+          emoji: "",
+          start_time: emoji_attachment.startTime,
+          end_time: emoji_attachment.endTime,
+          codepoint: emoji_attachment.codepoint,
+          position: {
+            x: emoji_attachment.position.x,
+            y: emoji_attachment.position.y,
+          },
+          size: emoji_attachment.size
+        })),
+      }
+      console.log('Request to save video:', request);
+
+      const response = await EditVideoApi(request);
+      if(response.secure_url !== ""){
+        setIsSaved(true);
+        setTimeout(() => {
+          setIsSaved(false);
+        }, 3000);
+      }
+    } catch (error) {
+      console.error('Error saving video:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  }
 
   if (isLoading || !videoData) return <p>Loading video...</p>;
   
@@ -41,9 +91,27 @@ function Preview() {
             </SelectContent>
           </Select> 
         </div>
-        <div>
+        <div
+          className="flex items-center gap-2">
+          <Button
+            onClick={HandleSaveVideo}
+            variant="outline"
+            disabled={isSaving || isSaved}
+            className={`${
+              isSaved ? "bg-green-600 hover:bg-green-700" : "bg-purple-600 hover:bg-purple-700"
+            } text-white font-medium rounded-lg p-3 transition-colors`}
+          >
+          {isSaving ? (
+            <Loader2 className="animate-spin" />
+          ) : isSaved ? (
+            <Check className="text-white" />
+          ) : (
+            <Save className="text-white" />
+          )}
+              Save
+          </Button>
           <DownloadVideo/>
-          </div>
+        </div>
 
     </div>
 
@@ -65,7 +133,7 @@ function Preview() {
           />
     </div>
 
-    <Timeline/>
+    <Timeline />
     
   
   </div>

@@ -18,7 +18,7 @@ export const MyVideo = ({videoUrl, attachments}: videoProps) => {
     updateEmojiAttachment,
     removeAttachment, updateCurrentTime,
     selectedItem,
-    setSelectedItem
+    setSelectedItem,
   } = useVideoContext()
 
 
@@ -69,17 +69,17 @@ export const MyVideo = ({videoUrl, attachments}: videoProps) => {
       updateEmojiAttachment(id, { position: { x: xPercent, y: yPercent } })
     }
   }
-  
-    const visibleTexts = attachments.texts.filter(
-      (text) => currentTimeInSeconds >= text.startTime && currentTimeInSeconds <= text.endTime,
-    )
+
+  const visibleTexts = attachments.texts.filter(
+    (text) => currentTimeInSeconds >= text.startTime && currentTimeInSeconds <= text.endTime,
+  )
       
   const visibleEmojis = attachments.emojis.filter(
     (emoji) => currentTimeInSeconds >= emoji.startTime && currentTimeInSeconds <= emoji.endTime)
 
-  const visibleMusics = attachments.musics.filter((music) => {
-    music.startTime <= currentTimeInSeconds && music.endTime >= currentTimeInSeconds
-  })
+  // const visibleMusics = attachments.musics.filter((music) => {
+  //   music.startTime <= currentTimeInSeconds && music.endTime >= currentTimeInSeconds
+  // })
 
 
   if (!videoUrl) {
@@ -117,6 +117,7 @@ export const MyVideo = ({videoUrl, attachments}: videoProps) => {
               border: isSelected ? "2px solid blue" : "none",
               borderRadius: "8px", // bo viền tròn đẹp hơn
               padding: "2px",
+              visibility: currentTimeInSeconds >= text.startTime && currentTimeInSeconds <= text.endTime ? 'visible' : 'hidden',
               }}        >
           {text.content}
           {isSelected && (
@@ -126,58 +127,58 @@ export const MyVideo = ({videoUrl, attachments}: videoProps) => {
             />
           )}
         </div>)
-      })}
-      {visibleEmojis.map((emoji) => {
-        // Kiểm tra emoji này có đang được chọn không
-        const isSelected = selectedItem?.itemId === emoji.id && selectedItem?.type === "emojis";
+          })}
+          {visibleEmojis.map((emoji) => {
+            // Kiểm tra emoji này có đang được chọn không
+            const isSelected = selectedItem?.itemId === emoji.id && selectedItem?.type === "emojis";
 
-        return (
-          <div
-            key={emoji.id}
-            draggable
-            onDragEnd={(e) => handleDrag(e, emoji.id, "emoji")}
-            onClick={(e) => {
-              e.stopPropagation();
-              setSelectedItem({
-                itemId: emoji.id,
-                type: "emojis",
-              });
-            }}
-            style={{
-              position: "absolute",
-              left: `${emoji.position.x}%`,
-              top: `${emoji.position.y}%`,
-              transform: "translate(-50%, -50%)",
-              cursor: "move",
-              border: isSelected ? "2px solid blue" : "none",
-              borderRadius: "8px", // bo viền tròn đẹp hơn
-              padding: "2px",
-            }}
-          >
-            <img
-              src={`https://fonts.gstatic.com/s/e/notoemoji/latest/${emoji.codepoint}/512.gif`}
-              alt="Emoji"
-              style={{
-                width: `${emoji.size}px`,
-                height: `${emoji.size}px`,
-                display: "block",
-              }}
-            />
-
-            {isSelected && (
-              <X
-                className="absolute top-[-10px] right-[-10px] text-red-500 hover:text-red-700 cursor-pointer bg-white rounded-full"
-                size={16}
+            return (
+              <div
+                key={emoji.id}
+                draggable
+                onDragEnd={(e) => handleDrag(e, emoji.id, "emoji")}
                 onClick={(e) => {
-                  e.stopPropagation(); 
-                  removeAttachment("emojis", emoji.id);
-                  setSelectedItem(null); // bỏ chọn emoji khi xóa
+                  e.stopPropagation();
+                  setSelectedItem({
+                    itemId: emoji.id,
+                    type: "emojis",
+                  });
                 }}
-              />
-            )}
-          </div>
-        );
-      })}
-      </AbsoluteFill>
+                style={{
+                  position: "absolute",
+                  left: `${emoji.position.x}%`,
+                  top: `${emoji.position.y}%`,
+                  transform: "translate(-50%, -50%)",
+                  cursor: "move",
+                  border: isSelected ? "2px solid blue" : "none",
+                  borderRadius: "8px", // bo viền tròn đẹp hơn
+                  padding: "2px",
+                }}
+              >
+                <img
+                  src={`https://fonts.gstatic.com/s/e/notoemoji/latest/${emoji.codepoint}/512.gif`}
+                  alt="Emoji"
+                  style={{
+                    width: `${emoji.size}px`,
+                    height: `${emoji.size}px`,
+                    display: "block",
+                  }}
+                />
+
+                {isSelected && (
+                  <X
+                    className="absolute top-[-10px] right-[-10px] text-red-500 hover:text-red-700 cursor-pointer bg-white rounded-full"
+                    size={16}
+                    onClick={(e) => {
+                      e.stopPropagation(); 
+                      removeAttachment("emojis", emoji.id);
+                      setSelectedItem(null); // bỏ chọn emoji khi xóa
+                    }}
+                  />
+                )}
+              </div>
+            );
+          })}
+        </AbsoluteFill>
       );
 }
