@@ -24,3 +24,14 @@ export const RegisterApi = async (signUpRequest) => {
         throw error;
     }
 }
+
+export const getStatisticApi = async (userId: string) => {
+  try {
+    const response = await api.get(`/user/${userId}/statistic`);
+    console.log(response);
+    return response.data;
+  } catch (error: any) {
+    console.error("Lỗi khi gọi getStatisticApi:", error);
+    throw error;
+  }
+};

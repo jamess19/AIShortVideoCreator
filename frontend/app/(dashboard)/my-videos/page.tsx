@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Search,
   Filter,
@@ -11,11 +11,25 @@ import {
   Play,
   Edit,
   Share2,
+  Youtube,
+  Facebook,
+  UploadCloud,
+  CheckCircle,
 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import Link from "next/link";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { VideoPlayer } from "@/components/video-player";
 import { VideoThumbnail } from "@/components/video-thumbnail";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { getFacebookAccessToken, getFacebookthUrlApi, getYoutubeAccessToken, getYoutubeAuthUrlApi, uploadVideoApi } from "@/services/video_api";
 
 interface Video {
   id: number;
@@ -34,6 +48,10 @@ export default function MyVideosPage() {
     id: number;
     title: string;
     videoUrl: string;
+    description: string;
+    keyword: string;
+    category: string;
+    privateStatus: string;
   } | null>(null);
 
   // Dữ liệu mẫu cho các video
@@ -122,6 +140,12 @@ export default function MyVideosPage() {
   ).length;
   const draftCount = videos.filter((video) => video.status === "draft").length;
   const totalCount = videos.length;
+  
+  const [shareDialog, setDialog] = useState<"choosePlatform" | "videoInfor" |"uploading" | "success" | "fail" | null>(null)
+  const [platform, setPlatform] = useState<"youtube" | "facebook" | null>(null)
+  const [uploadProgress, setUploadProgress] = useState<number>(0)
+  const [openDialog, setOpenDialog] = useState<"Video" | "Share" | null>(null)
+  const redirect_uri = "http://localhost:3000/my-videos"
 
   // Xử lý khi click vào video
   const handleVideoClick = (video: Video) => {
@@ -129,9 +153,103 @@ export default function MyVideosPage() {
       id: video.id,
       title: video.title,
       videoUrl: video.videoUrl,
+      description: "",
+      keyword: "",
+      category: "22",
+      privateStatus: "public"
     });
+    setOpenDialog("Video")
   };
 
+  // Xử lý khi chọn platform
+  const handlePlatfromChoiceClick = async (platform: "youtube" | "facebook") => {
+    setPlatform(platform)
+    sessionStorage.setItem("platform", platform);
+    if(platform === "youtube" && sessionStorage.getItem("youtubeToken") === null) {
+      const response = await getYoutubeAuthUrlApi(redirect_uri)
+      if(response) {
+      window.location.href = response;
+    }
+    }
+    else if (platform === "facebook" && sessionStorage.getItem("facebookToken") === null ) {
+      const response = await getFacebookthUrlApi(redirect_uri)
+      if(response) {
+      window.location.href = response;
+    }
+
+    }
+    setDialog("videoInfor")
+  }
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get("code");
+    const platform = sessionStorage.getItem("platform");
+
+    if (code && platform != null) {
+      if(platform === "youtube") {
+      getYoutubeAccessToken(code, redirect_uri)
+        .then((token) => {
+          if (token) {
+            sessionStorage.setItem("youtubeToken", token);
+            console.log(token);
+            window.location.replace("/my-videos");
+          }
+        })
+        .catch((error) => {
+          window.location.replace("/my-videos");
+          console.log(error)
+        });
+      }
+      if(platform === "facebook"){
+        getFacebookAccessToken(code, redirect_uri)
+        .then((token) => {
+          if (token) {
+            sessionStorage.setItem("facebookToken", token);
+            console.log(token);
+            window.location.replace("/my-videos");
+          }
+        })
+        .catch((error) => {
+          window.location.replace("/my-videos");
+          console.log(error)
+        });
+    }
+  }
+}, []);
+  // Xử lý khi submit video infor 
+const handleSubmitVideoInfor = async () => {
+  setDialog("uploading");
+  setUploadProgress(0);
+
+  try{
+    // lấy sesion token
+    const youtubeToken = sessionStorage.getItem("youtubeToken");
+    // gọi api upload
+
+    console.log(selectedVideo);
+    console.log(youtubeToken);
+    if(youtubeToken) {
+    const response = await uploadVideoApi(selectedVideo, youtubeToken)
+    // Giả lập tiến trình upload
+    for (let i = 1; i <= 100; i++) {
+      await new Promise((r) => setTimeout(r, 15));
+      setUploadProgress(i);
+    }
+  }
+    setDialog("success");
+
+    // Tự động đóng dialog sau 1.5s
+    setTimeout(() => {
+      setDialog(null);
+      setUploadProgress(0);
+      setPlatform(null);
+      setSelectedVideo(null);
+    }, 1500);
+  } catch (err) {
+    setDialog("fail");
+  }
+};
   return (
     <div className="p-8 ml-64">
       <div className="flex justify-between items-center mb-4">
@@ -244,7 +362,21 @@ export default function MyVideosPage() {
                     <Edit size={14} />
                     <span>Sửa</span>
                   </button>
-                  <button className="bg-white text-gray-800 px-3 py-1.5 rounded-md flex items-center gap-1 text-sm w-28 justify-center">
+                  <button className="bg-white text-gray-800 px-3 py-1.5 rounded-md flex items-center gap-1 text-sm w-28 justify-center"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedVideo({
+                    id: video.id,
+                    title: video.title,
+                    videoUrl: video.videoUrl,
+                    description: "",
+                    keyword: "",
+                    category: "22",
+                    privateStatus: "public"
+                    });
+                    setDialog("choosePlatform")
+                    setOpenDialog("Share")
+                  }}>
                     <Share2 size={14} />
                     <span>Chia sẻ</span>
                   </button>
@@ -293,8 +425,8 @@ export default function MyVideosPage() {
 
       {/* Video Player Dialog */}
       <Dialog
-        open={!!selectedVideo}
-        onOpenChange={(open) => !open && setSelectedVideo(null)}
+        open={(!!selectedVideo && openDialog === "Video")}
+        onOpenChange={(open) => !open && setSelectedVideo(null) && setOpenDialog(null)}
       >
         <DialogContent className="sm:max-w-[800px] p-0 overflow-hidden bg-black">
           <DialogTitle className="p-4 text-white">
@@ -308,6 +440,177 @@ export default function MyVideosPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      
+      {/* upload dialog */}
+       <Dialog
+       open={(!!shareDialog && openDialog === "Share")}
+       onOpenChange={(open) => !open && setDialog(null) && setOpenDialog(null) }
+       >
+       <DialogContent className="sm:max-w-[400px] flex flex-col items-center gap-6 py-8">
+         {shareDialog === "choosePlatform" && (
+         <div className="flex flex-col items-center gap-2">
+           <DialogTitle>Chia sẻ video lên nền tảng</DialogTitle>
+           <div className="flex gap-8 mt-2 items-center">
+             <button
+               onClick={() => handlePlatfromChoiceClick("youtube")}
+               className="flex flex-col items-center hover:scale-110 transition">
+               <Youtube size={36} className="text-red-600" />
+               <span className="mt-2">YouTube</span>
+             </button>
+
+             <button
+               onClick={() => handlePlatfromChoiceClick("facebook")}
+               className="flex flex-col items-center hover:scale-110 transition"
+             >
+               <Facebook size={36} className="text-blue-600" />
+               <span className="mt-2">Facebook</span>
+             </button>
+           </div>
+         </div>
+         
+       )}
+
+        {shareDialog === "videoInfor" && (
+            <form
+              className="flex flex-col gap-4 w-full"
+              onSubmit={e => {
+                
+                e.preventDefault();
+                handleSubmitVideoInfor()
+              }}
+            >
+              <div className="mb-2 text-center text-2xl font-bold">
+                Video Information
+              </div>
+
+              {/* Tiêu đề Video */}
+              <div>
+                <label className="block font-light mb-1">Tiêu đề </label>
+                <input
+                  className="border rounded px-3 py-2 w-full"
+                  placeholder="ex: 30 days coding"
+                  value={selectedVideo?.title}
+                  onChange={e =>
+                  setSelectedVideo(prev =>
+                    prev ? { ...prev, title: e.target.value } : prev
+                  )
+                  }
+                  required
+                />
+              </div>
+              
+              {/* Mô tả video */}
+              <div>
+                <label className="block font-light mb-1">Mô tả</label>
+                <Textarea placeholder="ex: this is video for my 30 days coding challenge" 
+                value={selectedVideo?.description}
+                onChange={e =>
+                setSelectedVideo(prev =>
+                  prev ? { ...prev, description: e.target.value } : prev
+                )
+                }/>
+                
+              </div>
+
+              {/* Keyword */}
+              <div>
+                <label className="block font-light mb-1">Keyword để tìm thấy video</label>
+                <input
+                  className="border rounded px-3 py-2 w-full"
+                  placeholder="ex: 30 days, coding, challenge..."
+                  value={selectedVideo?.keyword}
+                  onChange={e =>
+                  setSelectedVideo(prev =>
+                    prev ? { ...prev, keyword: e.target.value } : prev
+                  )
+                  }
+                  required
+                />
+              </div>
+              {/* Lấy danh sách category từ youtube (dùng api) */}
+              {/* <div>
+                <label className="block font-light mb-1">Thể loại</label>
+               <Select>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="thể loại" />
+                </SelectTrigger>
+                <SelectContent className="bg-white">
+                  <SelectItem value="public">Công khai</SelectItem>
+                  <SelectItem value="private">Riêng tư</SelectItem>
+                  <SelectItem value="unlisted">Không công khai</SelectItem>
+                </SelectContent>
+              </Select>
+              </div> */}
+
+              <div>
+                <label className="block font-light mb-1">Chế độ hiển thị</label>
+               <Select value={selectedVideo?.privateStatus}
+                onValueChange={v =>
+                setSelectedVideo(prev =>
+                  prev ? { ...prev, privateStatus: v } : prev
+                )}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Chế độ"/>
+                </SelectTrigger>
+                <SelectContent className="bg-white">
+                  <SelectItem value="public">Công khai</SelectItem>
+                  <SelectItem value="private">Riêng tư</SelectItem>
+                  <SelectItem value="unlisted">Không công khai</SelectItem>
+                </SelectContent>
+              </Select>
+              </div>
+
+               <Button
+                type="submit"
+                className="bg-purple-600 text-white rounded px-4 py-2 mt-2 hover:bg-purple-700"
+              >
+                Bắt đầu upload
+              </Button>
+            </form>
+          )}
+
+       {shareDialog === "uploading" && (
+         <div className="flex flex-col items-center">
+           <DialogTitle className='mb-2'>
+             <div className="flex">
+               <UploadCloud className="mr-2"/>
+               Đang tải lên {platform === "youtube" ? "YouTube" : "Facebook"}
+             </div>
+           </DialogTitle>
+           <div className="w-64 h-4 bg-gray-200 rounded-full overflow-hidden">
+             <div
+               className="h-full bg-purple-600 transition-all"
+               style={{ width: `${uploadProgress}%` }}
+             />
+           </div>
+           <div className="text-sm text-gray-700">{uploadProgress}%</div>
+         </div>
+       )}
+
+
+       {shareDialog === "success" && (
+         <div className="flex flex-col items-center">
+           <DialogTitle className='mb-2 text-green-600 flex items-center gap-2'>
+             <CheckCircle className="mr-2" /> Đã upload thành công!
+           </DialogTitle>
+         </div>
+       )}
+
+
+       {shareDialog === "fail" && (
+         <div className="flex flex-col items-center">
+           <DialogTitle className='mb-2 text-red-600'>Upload thất bại!</DialogTitle>
+           <button
+             className="mt-4"
+             onClick={() => setDialog("choosePlatform")}
+           >
+             Thử lại
+           </button>
+         </div>
+       )}
+       </DialogContent>
+     </Dialog>
     </div>
   );
 }

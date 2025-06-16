@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { VideoIcon, Eye, Upload, BarChart3 } from "lucide-react"
@@ -8,24 +8,60 @@ import { StatsOverview } from "@/components/stats-overview"
 import { PlatformStats } from "@/components/platform-stats"
 import { PerformanceChart } from "@/components/performance-chart"
 import Link from "next/link"
+import { getStatisticApi } from "@/services/user_api"
+import { useRouter } from "next/navigation"
 
+interface StatisticInfo{
+    videoId: string,    
+    viewCount: number,
+    likeCount: number,
+    favoriteCount: number,
+    commentCount: number,
+}
+interface statsData {
+  totalVideos: number,
+  totalViews: number,
+  totalLikes: number,
+  totalFavorites: number,
+  totalComments: number
+}
 export default function HomePage() {
   const [selectedPeriod, setSelectedPeriod] = useState("7days")
-
+  const [statsData, setStatsData] = useState<statsData>({
+  totalVideos: 0,
+  totalViews: 0,
+  totalLikes: 0,
+  totalFavorites: 0,
+  totalComments: 0,
+})
   // Load data -> call API for get stats Data
-  // Mock data
-  const statsData = {
-    totalVideos: 24,
-    totalViews: 125400,
-    totalLikes: 8900,
-    totalShares: 2100,
-    platforms: {
-      youtube: { videos: 8, views: 45200, subscribers: 1200 },
-      tiktok: { videos: 12, views: 68900, followers: 3400 },
-      facebook: { videos: 4, views: 11300, followers: 890 },
-    },
-  }
+useEffect(() => {
+  const fetchStats = async () => {
+    try {
+      const videoStatsList: StatisticInfo[] = await getStatisticApi("1");
+      console.log("Kết quả trả về từ getStatisticApi:", videoStatsList);
 
+      const totalVideos = videoStatsList.length;
+      const totalViews = videoStatsList.reduce((sum, v) => sum + (v.viewCount || 0), 0);
+      const totalLikes = videoStatsList.reduce((sum, v) => sum + (v.likeCount || 0), 0);
+      const totalFavorites = videoStatsList.reduce((sum, v) => sum + (v.favoriteCount || 0), 0);
+      const totalComments = videoStatsList.reduce((sum, v) => sum + (v.commentCount || 0), 0);
+
+      setStatsData({
+        totalVideos,
+        totalViews,
+        totalLikes,
+        totalFavorites,
+        totalComments,
+      });
+    } catch (error) {
+      console.error("Lỗi khi lấy thống kê:", error);
+    }
+  };
+
+  fetchStats();
+}, []);
+  
   return (
     <div className="p-8 ml-64">
       <div className="mb-8">
@@ -76,7 +112,7 @@ export default function HomePage() {
               </div>
             </CardHeader>
             <CardContent>
-              <PlatformStats platforms={statsData.platforms} />
+              <PlatformStats stats={statsData} />
             </CardContent>
           </Card>
         </div>

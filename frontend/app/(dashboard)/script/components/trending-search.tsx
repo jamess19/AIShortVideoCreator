@@ -5,56 +5,26 @@ import { Button } from "@/components/ui/button";
 import {  RefreshCw, Search, TrendingUp } from "lucide-react"
 import { Input } from "@/components/ui/input";
 import { TrendingContent } from "./trending-content";
+import { searchTrendingVideos } from "@/services/video_api";
 export default function TrendingSearch({SetSelectedContentForParent}: {SetSelectedContentForParent: (content: any) => void}) {
     const [keyword, setKeyword] = useState("");
     const [isSearching, setIsSearching] = useState(false);
     const [searchResults, setSearchResults] = useState<any[]>([]);
 
-    const handleTrendingSearch = () => {
+    const handleTrendingSearch = async () => {
         if (!keyword.trim()) return
 
         setIsSearching(true)
 
         // Simulate API call to YouTube/TikTok
-        setTimeout(() => {
-        const mockResults = [
-            {
-            id: "1",
-            title: "Thử thách 30 ngày " + keyword,
-            platform: "youtube",
-            views: "2.5M",
-            thumbnail: "/placeholder.svg?height=120&width=200",
-            trending_rank: 1,
-            },
-            {
-            id: "2",
-            title: "Hướng dẫn " + keyword + " cơ bản",
-            platform: "tiktok",
-            views: "1.8M",
-            thumbnail: "/placeholder.svg?height=120&width=200",
-            trending_rank: 2,
-            },
-            {
-            id: "3",
-            title: "Mẹo học " + keyword + " hiệu quả",
-            platform: "youtube",
-            views: "3.2M",
-            thumbnail: "/placeholder.svg?height=120&width=200",
-            trending_rank: 3,
-            },
-            {
-            id: "4",
-            title: "Review " + keyword + " mới nhất",
-            platform: "tiktok",
-            views: "4.1M",
-            thumbnail: "/placeholder.svg?height=120&width=200",
-            trending_rank: 4,
-            },
-        ]
-
-        setSearchResults(mockResults)
-        setIsSearching(false)
-            }, 1000)
+        try {
+          const response = await searchTrendingVideos(keyword);
+          setSearchResults(response);
+          setIsSearching(false);
+        }
+        catch (error) {
+          console.log(error);
+        }
     };
     const handleContentSelect = (content: any) => {
         SetSelectedContentForParent(content);
