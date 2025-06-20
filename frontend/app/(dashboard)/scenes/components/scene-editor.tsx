@@ -14,13 +14,18 @@ import { Scene } from "@/lib/models"
 interface SceneEditorProps {
   scene: Scene
   onUpdate: (updatedScene: any) => void
-  handleBackgroundChangeForParent: (content?: File, publicId?: string) => void
-  handleMusicChangeForParent: (content?: File, publicId?: string) => void
+  handleBackgroundChangeForParent: (content?: File, publicId?: string, url?: string) => void
+  handleMusicChangeForParent: (content?: File, publicId?: string, url?: string) => void
+  currentBackgroundUrl?: string
+  currentBackgroundPublicId?: string
+  currentMusicUrl?: string
+  currentMusicPublicId?: string
 }
 
 export function SceneEditor({ scene, onUpdate, 
                               handleBackgroundChangeForParent,
-                              handleMusicChangeForParent }: SceneEditorProps) {
+                              handleMusicChangeForParent, currentBackgroundUrl,currentBackgroundPublicId,
+                               currentMusicUrl,currentMusicPublicId }: SceneEditorProps) {
   const [sceneText, setSceneText] = useState(scene.text || "")
 
   const handleTextChange = (text: string) => {
@@ -55,7 +60,7 @@ export function SceneEditor({ scene, onUpdate,
             <TabsTrigger value="text">Nội dung</TabsTrigger>
             <TabsTrigger value="background">Hình nền</TabsTrigger>
             <TabsTrigger value="music">Nhạc nền</TabsTrigger>
-            <TabsTrigger value="voice">Giọng đọc</TabsTrigger>
+            <TabsTrigger disabled value="voice">Giọng đọc (sắp ra mắt)</TabsTrigger>
           </TabsList>
 
           <TabsContent value="text" className="space-y-4">
@@ -81,12 +86,15 @@ export function SceneEditor({ scene, onUpdate,
 
           <TabsContent value="background">
             <BackgroundSelector 
-              currentBackground={scene.bg_image_public_id}
-              onBackgroundChange={(content?: File, publicId?: string) => handleBackgroundChangeForParent(content, publicId)} />
+              currentBackgroundUrl={currentBackgroundUrl}
+              currentBackgroundPublicId={currentBackgroundPublicId}
+              onBackgroundChange={(content?: File, publicId?: string,url?: string) => handleBackgroundChangeForParent(content, publicId,url)} />
           </TabsContent>
 
           <TabsContent value="music">
-            <MusicSelector currentMusic={scene.bg_music_public_id} onMusicChange={(content?: File, publicId? : string) => handleMusicChangeForParent(content,publicId)} />
+            <MusicSelector currentMusicUrl={currentMusicUrl} 
+              currentMusicPublicId={currentMusicPublicId}
+              onMusicChange={(content?: File, publicId? : string, url?: string) => handleMusicChangeForParent(content,publicId, url)} />
           </TabsContent>
 
           <TabsContent value="voice">

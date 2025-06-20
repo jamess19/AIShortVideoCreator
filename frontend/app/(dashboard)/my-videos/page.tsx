@@ -29,112 +29,106 @@ import { VideoPlayer } from "@/components/video-player";
 import { VideoThumbnail } from "@/components/video-thumbnail";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { getFacebookAccessToken, getFacebookthUrlApi, getYoutubeAccessToken, getYoutubeAuthUrlApi, uploadVideoApi } from "@/services/video_api";
+import { getFacebookAccessToken, getFacebookthUrlApi, getYoutubeAccessToken,
+  GetVideosApi,
+   getYoutubeAuthUrlApi, uploadVideoApi } from "@/services/video_api";
+import { Video } from "@/lib/models";
 
-interface Video {
-  id: number;
+const mockVideos : Video[] = [
+  {
+    _id:  "1",
+    title: "Thử thách 30 ngày",
+    status: "done",
+    video_url:
+      "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4",
+    userId: "user123",
+    duration: 120,
+    can_edit: true,
+    public_id: "video_1",
+  },
+  {
+    _id: "2",
+    public_id: "video_2",
+    title: "Mẹo học tiếng Anh hiệu quả",
+    status: "done",
+    video_url:
+      "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4",
+    userId: "user123",
+    duration: 180,
+    can_edit: true,
+  },
+  {
+    _id: "3",
+    public_id: "video_3",
+    title: "Review công nghệ mới",
+    status: "processing",
+    video_url:
+      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+    userId: "user123",
+    duration: 240,
+    can_edit: true,      
+  },
+  {
+    _id: "4",
+    public_id: "video_4",
+    title: "Hướng dẫn nấu ăn nhanh",
+    status: "done",
+    video_url:
+      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
+    userId: "user123",
+    duration: 300,
+    can_edit: true,
+  },
+  {
+    _id: "5",
+    public_id: "video_5",
+    title: "Bí quyết sống khỏe",
+    status: "processing",
+    video_url:
+      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
+    userId: "user123",
+    duration: 150,
+    can_edit: true,     
+  },
+  {
+    _id: "6",
+    public_id: "video_6",
+    title: "Khám phá địa điểm du lịch",
+    status: "done",
+    video_url:
+      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
+    userId: "user123",
+    duration: 360,
+    can_edit: true,    
+  },  
+]
+interface UploadVideoField {
   title: string;
-  status: "published" | "draft";
-  views: number;
-  timeAgo: string;
-  videoUrl: string;
-  duration?: number;
+  description: string;
+  keyword: string;
+  category: string;
+  privateStatus: string;
 }
 
 export default function MyVideosPage() {
   const [activeTab, setActiveTab] = useState("all");
-  const [hoveredVideo, setHoveredVideo] = useState<number | null>(null);
-  const [selectedVideo, setSelectedVideo] = useState<{
-    id: number;
-    title: string;
-    videoUrl: string;
-    description: string;
-    keyword: string;
-    category: string;
-    privateStatus: string;
-  } | null>(null);
+  const [hoveredVideo, setHoveredVideo] = useState<string | null>(null);
+  const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
+  const [videos, setVideos] = useState<Video[]>([]);
 
-  // Dữ liệu mẫu cho các video
-  const [videos, setVideos] = useState<Video[]>([
-    {
-      id: 1,
-      title: "Thử thách 30 ngày",
-      status: "published",
-      views: 1240,
-      timeAgo: "2 ngày trước",
-      videoUrl:
-        "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4",
-    },
-    {
-      id: 2,
-      title: "Mẹo học tiếng Anh hiệu quả",
-      status: "published",
-      views: 850,
-      timeAgo: "1 tuần trước",
-      videoUrl:
-        "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4",
-    },
-    {
-      id: 3,
-      title: "Review công nghệ mới",
-      status: "draft",
-      views: 0,
-      timeAgo: "3 giờ trước",
-      videoUrl:
-        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-    },
-    {
-      id: 4,
-      title: "Hướng dẫn nấu ăn nhanh",
-      status: "published",
-      views: 320,
-      timeAgo: "3 ngày trước",
-      videoUrl:
-        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
-    },
-    {
-      id: 5,
-      title: "Bí quyết sống khỏe",
-      status: "draft",
-      views: 0,
-      timeAgo: "1 ngày trước",
-      videoUrl:
-        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
-    },
-    {
-      id: 6,
-      title: "Khám phá địa điểm du lịch",
-      status: "published",
-      views: 720,
-      timeAgo: "5 ngày trước",
-      videoUrl:
-        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
-    },
-  ]);
-
-  const formatDuration = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = Math.floor(seconds % 60);
-    return `${minutes.toString().padStart(2, "0")}:${remainingSeconds
-      .toString()
-      .padStart(2, "0")}`;
-  };
-
-  const handleDurationLoad = (videoId: number, duration: number) => {
-    setVideos((prevVideos) =>
-      prevVideos.map((video) =>
-        video.id === videoId ? { ...video, duration } : video
-      )
-    );
-  };
-
+  const [uploadVideoField, setUploadVideoField] = useState<UploadVideoField>({
+    title: "",
+    description: "",
+    keyword: "",
+    category: "",
+    privateStatus: ""
+  });
   const filteredVideos = videos.filter((video) => {
     if (activeTab === "all") return true;
     if (activeTab === "published") return video.status === "published";
     if (activeTab === "draft") return video.status === "draft";
     return true;
   });
-
   const publishedCount = videos.filter(
     (video) => video.status === "published"
   ).length;
@@ -146,40 +140,6 @@ export default function MyVideosPage() {
   const [uploadProgress, setUploadProgress] = useState<number>(0)
   const [openDialog, setOpenDialog] = useState<"Video" | "Share" | null>(null)
   const redirect_uri = "http://localhost:3000/my-videos"
-
-  // Xử lý khi click vào video
-  const handleVideoClick = (video: Video) => {
-    setSelectedVideo({
-      id: video.id,
-      title: video.title,
-      videoUrl: video.videoUrl,
-      description: "",
-      keyword: "",
-      category: "22",
-      privateStatus: "public"
-    });
-    setOpenDialog("Video")
-  };
-
-  // Xử lý khi chọn platform
-  const handlePlatfromChoiceClick = async (platform: "youtube" | "facebook") => {
-    setPlatform(platform)
-    sessionStorage.setItem("platform", platform);
-    if(platform === "youtube" && sessionStorage.getItem("youtubeToken") === null) {
-      const response = await getYoutubeAuthUrlApi(redirect_uri)
-      if(response) {
-      window.location.href = response;
-    }
-    }
-    else if (platform === "facebook" && sessionStorage.getItem("facebookToken") === null ) {
-      const response = await getFacebookthUrlApi(redirect_uri)
-      if(response) {
-      window.location.href = response;
-    }
-
-    }
-    setDialog("videoInfor")
-  }
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -214,42 +174,115 @@ export default function MyVideosPage() {
           window.location.replace("/my-videos");
           console.log(error)
         });
+      }
     }
-  }
-}, []);
-  // Xử lý khi submit video infor 
-const handleSubmitVideoInfor = async () => {
-  setDialog("uploading");
-  setUploadProgress(0);
+  }, []);
+  useEffect(() => {
+    const fetchVideos = async () => {
+      try {
+        const response = await GetVideosApi();
+        if (response) {
+          setVideos(response.videos_data);
+        }
+      } catch (error) {
+        console.error("Error fetching videos:", error);
+        setVideos(mockVideos); 
+      }
+    };
 
-  try{
-    // lấy sesion token
-    const youtubeToken = sessionStorage.getItem("youtubeToken");
-    // gọi api upload
-
-    console.log(selectedVideo);
-    console.log(youtubeToken);
-    if(youtubeToken) {
-    const response = await uploadVideoApi(selectedVideo, youtubeToken)
-    // Giả lập tiến trình upload
-    for (let i = 1; i <= 100; i++) {
-      await new Promise((r) => setTimeout(r, 15));
-      setUploadProgress(i);
+    fetchVideos();
+  }, []);
+  useEffect(() => {
+    if(selectedVideo) {
+      setUploadVideoField({
+        title: selectedVideo.title,
+        description: "",
+        keyword: "",
+        category: "",
+        privateStatus: "public"
+      });
     }
-  }
-    setDialog("success");
+  }, [selectedVideo]);
 
-    // Tự động đóng dialog sau 1.5s
-    setTimeout(() => {
-      setDialog(null);
-      setUploadProgress(0);
-      setPlatform(null);
-      setSelectedVideo(null);
-    }, 1500);
-  } catch (err) {
-    setDialog("fail");
+  const formatDuration = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = Math.floor(seconds % 60);
+    return `${minutes.toString().padStart(2, "0")}:${remainingSeconds
+      .toString()
+      .padStart(2, "0")}`;
+  };
+
+  const handleDurationLoad = (videoId: string, duration: number) => {
+    setVideos((prevVideos) =>
+      prevVideos.map((video) =>
+        video.public_id === videoId ? { ...video, duration } : video
+      )
+    );
+  };
+
+  const handleVideoClick = (video: Video) => {
+    setSelectedVideo(video);
+    setOpenDialog("Video")
+  };
+
+  const handlePlatfromChoiceClick = async (platform: "youtube" | "facebook") => {
+    setPlatform(platform)
+    sessionStorage.setItem("platform", platform);
+    if(platform === "youtube" && sessionStorage.getItem("youtubeToken") === null) {
+      const response = await getYoutubeAuthUrlApi(redirect_uri)
+      if(response) {
+      window.location.href = response;
+    }
+    }
+    else if (platform === "facebook" && sessionStorage.getItem("facebookToken") === null ) {
+      const response = await getFacebookthUrlApi(redirect_uri)
+      if(response) {
+      window.location.href = response;
+    }
+
+    }
+    setDialog("videoInfor")
   }
-};
+
+  const handleSubmitVideoInfor = async () => {
+    setDialog("uploading");
+    setUploadProgress(0);
+
+    try{
+      const youtubeToken = sessionStorage.getItem("youtubeToken");
+
+      const request = {
+        id: 1,
+        title: uploadVideoField.title,
+        description: uploadVideoField.description,
+        keyword: uploadVideoField.keyword,
+        category: uploadVideoField.category,
+        privateStatus: uploadVideoField.privateStatus,
+        videoUrl: selectedVideo?.video_url || "",
+      }
+
+      if(youtubeToken) {
+        const response = await uploadVideoApi(request, youtubeToken)
+        // Giả lập tiến trình upload
+        for (let i = 1; i <= 100; i++) {
+          await new Promise((r) => setTimeout(r, 15));
+          setUploadProgress(i);
+        }
+      }
+      setDialog("success");
+
+      // Tự động đóng dialog sau 1.5s
+      setTimeout(() => {
+        setDialog(null);
+        setUploadProgress(0);
+        setPlatform(null);
+        setSelectedVideo(null);
+      }, 1500);
+    } catch (err) {
+      setDialog("fail");
+      console.error("Error uploading video:", err);
+    }
+  };
   return (
     <div className="p-8 ml-64">
       <div className="flex justify-between items-center mb-4">
@@ -322,20 +355,20 @@ const handleSubmitVideoInfor = async () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
         {filteredVideos.map((video) => (
           <div
-            key={video.id}
+            key={video.public_id}
             className="bg-gray-100 rounded-md overflow-hidden cursor-pointer"
-            onMouseEnter={() => setHoveredVideo(video.id)}
+            onMouseEnter={() => setHoveredVideo(video.public_id)}
             onMouseLeave={() => setHoveredVideo(null)}
             onClick={() => handleVideoClick(video)}
           >
             <div className="relative aspect-[2/3] bg-gray-700 flex items-center justify-center">
               {/* Video Thumbnail từ frame đầu tiên */}
               <VideoThumbnail
-                videoUrl={video.videoUrl}
+                videoUrl={video.video_url}
                 alt={video.title}
                 className="w-full h-full object-cover"
                 onDurationLoad={(duration) =>
-                  handleDurationLoad(video.id, duration)
+                  handleDurationLoad(video.public_id, duration)
                 }
               />
 
@@ -356,7 +389,7 @@ const handleSubmitVideoInfor = async () => {
                 {video.duration ? formatDuration(video.duration) : "00:00"}
               </div>
 
-              {hoveredVideo === video.id && (
+              {hoveredVideo === video.public_id && (
                 <div className="absolute inset-0 bg-gray-400 bg-opacity-40 flex flex-col items-center justify-center gap-2">
                   <button className="bg-white text-gray-800 px-3 py-1.5 rounded-md flex items-center gap-1 text-sm w-28 justify-center">
                     <Edit size={14} />
@@ -365,15 +398,7 @@ const handleSubmitVideoInfor = async () => {
                   <button className="bg-white text-gray-800 px-3 py-1.5 rounded-md flex items-center gap-1 text-sm w-28 justify-center"
                   onClick={(e) => {
                     e.stopPropagation();
-                    setSelectedVideo({
-                    id: video.id,
-                    title: video.title,
-                    videoUrl: video.videoUrl,
-                    description: "",
-                    keyword: "",
-                    category: "22",
-                    privateStatus: "public"
-                    });
+                    setSelectedVideo(video);
                     setDialog("choosePlatform")
                     setOpenDialog("Share")
                   }}>
@@ -434,7 +459,7 @@ const handleSubmitVideoInfor = async () => {
           </DialogTitle>
           {selectedVideo && (
             <VideoPlayer
-              videoUrl={selectedVideo.videoUrl}
+              videoUrl={selectedVideo.video_url}
               title={selectedVideo.title}
             />
           )}
@@ -490,11 +515,12 @@ const handleSubmitVideoInfor = async () => {
                 <input
                   className="border rounded px-3 py-2 w-full"
                   placeholder="ex: 30 days coding"
-                  value={selectedVideo?.title}
+                  value={uploadVideoField.title}
                   onChange={e =>
-                  setSelectedVideo(prev =>
-                    prev ? { ...prev, title: e.target.value } : prev
-                  )
+                    setUploadVideoField(prev => ({
+                      ...prev,
+                      title: e.target.value
+                    }))
                   }
                   required
                 />
@@ -504,11 +530,12 @@ const handleSubmitVideoInfor = async () => {
               <div>
                 <label className="block font-light mb-1">Mô tả</label>
                 <Textarea placeholder="ex: this is video for my 30 days coding challenge" 
-                value={selectedVideo?.description}
+                value={uploadVideoField.description || ""}
                 onChange={e =>
-                setSelectedVideo(prev =>
-                  prev ? { ...prev, description: e.target.value } : prev
-                )
+                  setUploadVideoField(prev => ({
+                    ...prev,
+                    description: e.target.value
+                  }))
                 }/>
                 
               </div>
@@ -519,11 +546,12 @@ const handleSubmitVideoInfor = async () => {
                 <input
                   className="border rounded px-3 py-2 w-full"
                   placeholder="ex: 30 days, coding, challenge..."
-                  value={selectedVideo?.keyword}
+                  value={uploadVideoField?.keyword}
                   onChange={e =>
-                  setSelectedVideo(prev =>
-                    prev ? { ...prev, keyword: e.target.value } : prev
-                  )
+                    setUploadVideoField(prev => ({
+                      ...prev,
+                      keyword: e.target.value
+                    }))
                   }
                   required
                 />
@@ -545,11 +573,13 @@ const handleSubmitVideoInfor = async () => {
 
               <div>
                 <label className="block font-light mb-1">Chế độ hiển thị</label>
-               <Select value={selectedVideo?.privateStatus}
+               <Select value={uploadVideoField.privateStatus}
                 onValueChange={v =>
-                setSelectedVideo(prev =>
-                  prev ? { ...prev, privateStatus: v } : prev
-                )}>
+                  setUploadVideoField(prev => ({
+                    ...prev,
+                    privateStatus: v
+                  }))
+                }>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Chế độ"/>
                 </SelectTrigger>

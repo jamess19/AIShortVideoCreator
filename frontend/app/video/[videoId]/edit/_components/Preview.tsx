@@ -1,4 +1,6 @@
-import React, {  useState } from 'react';
+"use client"
+import React, {  useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {Player} from '@remotion/player';
 import { MyVideo } from './RemotionVideo';
 import { Fullscreen, Save, Loader2, Check, Edit } from 'lucide-react';
@@ -11,6 +13,7 @@ import { EditVideoApi } from '@/services/video_api';
 import { text } from 'stream/consumers';
 
 function Preview() {
+  const router = useRouter();
   const [screenSize, setScreenSize] = useState({
                                 width:800,
                                 height:500
@@ -21,6 +24,12 @@ function Preview() {
   const[isSaving, setIsSaving] = useState(false)
   const [isSaved, setIsSaved] = useState(false);
 
+  useEffect(() => {
+    if (videoData) {
+      const durationInFrames = Math.floor(videoData.duration * 30);
+      console.log('Video duration in frames:', durationInFrames);
+    }
+  }, [videoData]);
 
 //   const handleSeek = (time: number) => {
 //   const frame = Math.floor(time * 30);
@@ -65,6 +74,7 @@ function Preview() {
           setIsSaved(false);
         }, 3000);
       }
+      router.push(`/my-videos`);
     } catch (error) {
       console.error('Error saving video:', error);
     } finally {

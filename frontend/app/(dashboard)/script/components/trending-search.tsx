@@ -20,10 +20,13 @@ export default function TrendingSearch({SetSelectedContentForParent}: {SetSelect
         try {
           const response = await searchTrendingVideos(keyword);
           setSearchResults(response);
-          setIsSearching(false);
         }
         catch (error) {
           console.log(error);
+          setSearchResults([]);
+        }
+        finally{
+          setIsSearching(false);
         }
     };
     const handleContentSelect = (content: any) => {

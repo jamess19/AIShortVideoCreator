@@ -15,29 +15,28 @@ import { GetMusicTracksApi } from "@/services/music_api"
 import { MusicTrack } from "@/lib/models"
 
 interface MusicSelectorProps {
-  currentMusic: any
-  onMusicChange: (content?: File, publicId?: string) => void
+  currentMusicUrl?: string
+  currentMusicPublicId?: string
+  onMusicChange: (content?: File, publicId?: string, url?: string) => void
 }
 
-export function MusicSelector({ currentMusic, onMusicChange }: MusicSelectorProps) {
+export function MusicSelector({ currentMusicUrl,currentMusicPublicId, onMusicChange }: MusicSelectorProps) {
   const [activeTab, setActiveTab] = useState<string>("library")
   const [musicTracks, setMusicTracks] = useState<MusicTrack[]>([])
-  const [selectedMusic, setSelectedMusic] = useState<string>("")
   const [playingMusicId, setPlayingMusicId] = useState<string | null>(null)
   const [musicVolume, setMusicVolume] = useState<number>(50)
   const [isGeneratingAI, setIsGeneratingAI] = useState(false)
   const [aiPrompt, setAiPrompt] = useState("")
   const { toast } = useToast()
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const selectedMusicUrl = currentMusicUrl;
+  const selectedMusicPublicId = currentMusicPublicId;
 
   useEffect(() => {
     const fetchMusicTracks = async () => {
       try {
         const tracks = await GetMusicTracksApi()
         setMusicTracks(tracks)
-        if (tracks.length > 0) {
-          setSelectedMusic(tracks[0].publicId) // Set default selected music
-        }
       } catch (error) {
         console.error("Error fetching music tracks:", error)
         toast({
@@ -51,11 +50,10 @@ export function MusicSelector({ currentMusic, onMusicChange }: MusicSelectorProp
   }, [])
 
   const handleMusicSelect = (musicId: string) => {
-    setSelectedMusic(musicId)
 
     const selectedTrack = musicTracks.find((track) => track.publicId === musicId)
     if (selectedTrack) {
-      onMusicChange(undefined, selectedTrack.publicId);
+      onMusicChange(undefined, selectedTrack.publicId, selectedTrack.musicUrl);
     }
   }
   const handlePlayMusicTrack = (track: MusicTrack) => {
@@ -132,10 +130,6 @@ export function MusicSelector({ currentMusic, onMusicChange }: MusicSelectorProp
           step={1}
           onValueChange={(value) => {
             setMusicVolume(value[0])
-            onMusicChange({
-              ...currentMusic,
-              volume: value[0],
-            })
           }}
         />
         <div className="flex justify-between text-xs text-muted-foreground">
@@ -150,16 +144,16 @@ export function MusicSelector({ currentMusic, onMusicChange }: MusicSelectorProp
           <TabsTrigger value="library" className="flex-1">
             Thư viện
           </TabsTrigger>
-          <TabsTrigger value="ai" className="flex-1">
-            Tạo bằng AI
+          <TabsTrigger disabled value="ai" className="flex-1">
+            Tạo bằng AI (sắp ra mắt)
           </TabsTrigger>
-          <TabsTrigger value="upload" className="flex-1">
-            Tải lên
+          <TabsTrigger disabled value="upload" className="flex-1">
+            Tải lên (sắp ra mắt)
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="library" className="space-y-2">
-          <RadioGroup value={selectedMusic} onValueChange={handleMusicSelect} className="space-y-2">
+          <RadioGroup value={selectedMusicPublicId} onValueChange={handleMusicSelect} className="space-y-2">
             {musicTracks.map((track) => (
               <div
                 key={track.publicId}
@@ -233,20 +227,6 @@ export function MusicSelector({ currentMusic, onMusicChange }: MusicSelectorProp
                 </div>
               </div>
             )}
-
-            {currentMusic?.aiGenerated && (
-              <div className="p-3 bg-purple-50 rounded-md border border-purple-200">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-purple-800">{currentMusic.name}</p>
-                    <p className="text-sm text-purple-600">Mô tả: {currentMusic.prompt}</p>
-                  </div>
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <Play className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            )}
           </div>
         </TabsContent>
 
@@ -262,20 +242,6 @@ export function MusicSelector({ currentMusic, onMusicChange }: MusicSelectorProp
               </Button>
               <Input id="music-upload" type="file" className="hidden" accept="audio/*" onChange={handleFileUpload} />
             </div>
-
-            {currentMusic?.type === "upload" && (
-              <div className="p-3 bg-green-50 rounded-md border border-green-200">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-green-800">Tệp đã tải lên</p>
-                    <p className="text-sm text-green-600">{currentMusic.name}</p>
-                  </div>
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <Play className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            )}
           </div>
         </TabsContent>
       </Tabs>

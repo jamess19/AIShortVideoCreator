@@ -21,16 +21,27 @@ export default function EditVideoPage() {
       const videoDataResponse = await GetVideoByIdApi(videoId);
       console.log("Video data response:", videoDataResponse);
       if(!videoDataResponse) {
-        console.error("Video data not found");
+        console.error("Không thể lấy dữ liệu video");
+        return;
+      }
+      if(videoDataResponse.status_code !== 200) {
+        alert("Không thể lấy dữ liệu video: " + videoDataResponse.message);
+        window.location.href = '/';
+        return;
+      }
+      if(videoDataResponse.video_data.can_edit === false) {
+        alert("Video này không thể chỉnh sửa");
+        window.location.href = '/';
         return;
       }
       const videoData: VideoData = {
-        videoId: videoDataResponse.public_id,
-        videoUrl: videoDataResponse.video_url,
-        title: videoDataResponse.title,
-        duration: videoDataResponse.duration,
+        videoId: videoDataResponse.video_data.public_id,
+        videoUrl: videoDataResponse.video_data.video_url,
+        title: videoDataResponse.video_data.title,
+        duration: videoDataResponse.video_data.duration,
         currentTime: 0
       };
+      console.log("Video data:", videoData);
       setVideoData(videoData);
     }
 
