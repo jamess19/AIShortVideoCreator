@@ -32,3 +32,17 @@ export interface MusicTrack{
   publicId : string;
   duration: string;
 }
+export interface Image{
+  image_url: string;
+  public_id: string;
+}
+export interface Video{
+  _id: string;
+  public_id: string;
+  title: string;
+  status: string;
+  video_url: string;
+  userId: string;
+  duration: number;
+  can_edit: boolean;
+}

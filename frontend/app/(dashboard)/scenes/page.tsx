@@ -39,12 +39,14 @@ interface BackGroundImage{
   publicId?: string
   content? : File
   sceneId: number
+  url?: string
 }
 interface BackGroundMusic{
   type: string
   publicId?: string
   content? : File
   sceneId: number
+  url?: string
 }
 export default function ScenesPage() {
   const [scriptJson, setScriptJson] = useState<any>(null)
@@ -132,17 +134,17 @@ export default function ScenesPage() {
     setScriptJson(updatedScript)
     localStorage.setItem("selectedScript", JSON.stringify(updatedScript))
   }
-  const handleBackgroundChange = (sceneId: number, content?: File, publicId?: string) => {
+  const handleBackgroundChange = (sceneId: number, content?: File, publicId?: string, url?: string) => {
     setBackgroundImages((prev) => {
       const next = [...prev];
-      next[sceneId-1] = { type: "image", publicId, content, sceneId: sceneId };
+      next[sceneId-1] = { type: "image", publicId, content, sceneId: sceneId, url: url };
       return [...next]
     })
   }
-  const handleMusicChange = (sceneId: number, content?: File, publicId?: string) => {
+  const handleMusicChange = (sceneId: number, content?: File, publicId?: string, url?: string) => {
     setBackgroundMusics((prev) => {
       const next = [...prev];
-      next[sceneId-1] = { type: "music", publicId, content: content, sceneId: sceneId };
+      next[sceneId-1] = { type: "music", publicId, content: content, sceneId: sceneId, url: url };
       return [...next]
     })
   }
@@ -192,28 +194,29 @@ export default function ScenesPage() {
         request.append("background_musics", music);
       });
 
-      setIsSaving(true)
       console.log("Saving video with request:");
       for (const pair of request.entries()) {
           console.log(pair[0], pair[1]);
       }
 
-      const response = await CreateVideoApi(request)
-      if(response && response.secure_url !== ""){
-        toast({
-          title: "Lưu thành công",
-          description: "Cấu hình cảnh đã được lưu",
-        })
+      setIsSaving(true)
+
+      // const response = await CreateVideoApi(request)
+      // if(response && response.secure_url !== ""){
+      //   toast({
+      //     title: "Lưu thành công",
+      //     description: "Cấu hình cảnh đã được lưu",
+      //   })
   
-        router.push(`/video/${response.public_id}/edit`);
-      }
-      else{
-        toast({
-          title: "Lỗi",
-          description: "Không thể lưu cấu hình cảnh. Vui lòng thử lại sau.",
-          variant: "destructive",
-        })
-      }
+      //   router.push(`/video/${response.public_id}/edit`);
+      // }
+      // else{
+      //   toast({
+      //     title: "Lỗi",
+      //     description: "Không thể lưu cấu hình cảnh. Vui lòng thử lại sau.",
+      //     variant: "destructive",
+      //   })
+      // }
     } catch (error) {
       console.error("Error saving video:", error)
       setIsSaving(false)
@@ -332,9 +335,13 @@ export default function ScenesPage() {
         <div className="lg:col-span-3">
           {scriptJson.scenes.map((scene: any) => (
             <div key={scene.scene_id} className={activeSceneId === scene.scene_id ? "block" : "hidden"}>
-              <SceneEditor scene={scene} 
-                handleBackgroundChangeForParent={(content?: File, publicId?: string) => handleBackgroundChange(scene.scene_id, content, publicId)}
-                handleMusicChangeForParent={(content?: File, publicId? : string) => handleMusicChange(scene.scene_id, content,publicId)}
+              <SceneEditor scene={scene}
+                currentBackgroundUrl={backgroundImages[scene.scene_id - 1]?.url}
+                currentBackgroundPublicId={backgroundImages[scene.scene_id - 1]?.publicId}
+                currentMusicUrl={backgroundMusics[scene.scene_id - 1]?.url}
+                currentMusicPublicId={backgroundMusics[scene.scene_id - 1]?.publicId}
+                handleBackgroundChangeForParent={(content?: File, publicId?: string, url?: string) => handleBackgroundChange(scene.scene_id, content, publicId, url)}
+                handleMusicChangeForParent={(content?: File, publicId? : string, url?: string) => handleMusicChange(scene.scene_id, content,publicId, url)}
                 onUpdate={(updatedScene) => handleSceneUpdate(scene.scene_id, updatedScene)} />
             </div>
           ))}

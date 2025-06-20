@@ -10,20 +10,22 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Upload, Sparkles, RefreshCw } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-
+import { GenerateImageApi, GenerateImageRequest } from "@/services/image_api"
 interface BackgroundSelectorProps {
-  currentBackground: any
-  onBackgroundChange: (content?: File, publicId?: string) => void
+  currentBackgroundUrl?: string
+  currentBackgroundPublicId?: string
+  onBackgroundChange: (content?: File, publicId?: string, url?: string) => void
 }
 
-export function BackgroundSelector({ currentBackground, onBackgroundChange }: BackgroundSelectorProps) {
+export function BackgroundSelector({ currentBackgroundUrl: currentBackgroundUrl,currentBackgroundPublicId, onBackgroundChange }: BackgroundSelectorProps) {
   const imageInputRef = useRef<HTMLInputElement>(null)
   const [activeTab, setActiveTab] = useState<string>("templates")
-  const [selectedBackground, setSelectedBackground] = useState<string>(currentBackground?.url ? "custom" : "bg1")
   const [isGeneratingAI, setIsGeneratingAI] = useState(false)
   const [aiPrompt, setAiPrompt] = useState("")
   const { toast } = useToast()
-
+  const selectedBackgroundUrl = currentBackgroundUrl
+  const selectedBackgroundPublicId = currentBackgroundPublicId || "uploaded"
+  
   const backgrounds = [
     { id: "bg1", type: "solid", color: "bg-gradient-to-r from-purple-500 to-pink-500" },
     { id: "bg2", type: "solid", color: "bg-gradient-to-r from-cyan-500 to-blue-500" },
@@ -34,8 +36,6 @@ export function BackgroundSelector({ currentBackground, onBackgroundChange }: Ba
   ]
 
   const handleBackgroundSelect = (bgId: string) => {
-    setSelectedBackground(bgId)
-
     // const selectedBg = backgrounds.find((bg) => bg.id === bgId)
     // if (selectedBg) {
     //   onBackgroundChange({
@@ -49,7 +49,7 @@ export function BackgroundSelector({ currentBackground, onBackgroundChange }: Ba
     const file = e.target.files?.[0]
     if (!file) return
 
-    onBackgroundChange(file, undefined)
+    onBackgroundChange(file, undefined, "uploaded")
 
     toast({
       title: "Tải lên thành công",
@@ -57,39 +57,76 @@ export function BackgroundSelector({ currentBackground, onBackgroundChange }: Ba
     })
   }
 
-  const generateAIBackground = () => {
-    if (!aiPrompt.trim()) {
-      toast({
-        title: "Vui lòng nhập mô tả",
-        description: "Nhập mô tả để AI tạo hình nền",
-        variant: "destructive",
-      })
+  const generateAIBackground = async () => {
+    try{
+   
+     if (!aiPrompt.trim()) {
+        toast({
+          title: "Vui lòng nhập mô tả",
+          description: "Nhập mô tả để AI tạo hình nền",
+          variant: "destructive",
+        })
+        return
+      }
+
+      setIsGeneratingAI(true)
+
+      const request: GenerateImageRequest = {
+        content: aiPrompt,
+        width: 800,
+        height: 600,
+      }
+
+      const response = await GenerateImageApi(request)
+      if(response && response.status_code === 200){
+        onBackgroundChange(undefined, response.public_id, response.image_url)
+      }
+      else{
+        throw new Error("Failed to generate image")
+      }
+
+    }
+    catch (error){
+      alert(`Server is busy with response ${error} : . Please try again later.`)
       return
     }
-
-    setIsGeneratingAI(true)
-
-    // Simulate AI image generation
-    setTimeout(() => {
-      // In a real app, this would be an API call to an AI image generator
-      const generatedImageUrl = "/placeholder.svg?height=720&width=1280"
-
-      onBackgroundChange({
-        type: "image",
-        url: generatedImageUrl,
-        aiGenerated: true,
-        prompt: aiPrompt,
-      })
-
+    finally{
       setIsGeneratingAI(false)
+    }
 
-      toast({
-        title: "Tạo hình nền thành công",
-        description: "AI đã tạo hình nền theo mô tả của bạn",
-      })
-    }, 2000)
+    
   }
 
+  const RenderSelectedBackgroundImage = () => {
+    if(!selectedBackgroundUrl){
+      return(
+        <div className="text-sm text-muted-foreground mt-4">
+          <p>Chưa chọn hình nền. Vui lòng chọn một hình nền từ các mẫu có sẵn, tạo bằng AI hoặc tải lên.</p>
+        </div>
+      )
+    }
+    else if(selectedBackgroundUrl === "uploaded"){
+      return (
+        <div className="space-y-2">
+          <p className="text-sm font-medium mb-2">Bạn đã tải lên ảnh</p>
+        </div>
+      ) 
+    }
+    else{
+      return (
+        <div className="space-y-2">
+          <p className="text-sm font-medium mb-2">Hình nền đã chọn:</p>
+          <div className="border-2 border-purple-300 rounded-md overflow-hidden">
+            <img
+              src={selectedBackgroundUrl || "/placeholder.svg"}
+              alt="selected background"
+              className="w-full h-100 object-cover"
+            />
+          </div>
+        </div>
+      )
+    }
+  }
   return (
     <div className="space-y-4">
       <Tabs defaultValue={activeTab} onValueChange={setActiveTab}>
@@ -107,7 +144,7 @@ export function BackgroundSelector({ currentBackground, onBackgroundChange }: Ba
 
         <TabsContent value="templates" className="space-y-4">
           <RadioGroup
-            value={selectedBackground}
+            value={selectedBackgroundUrl}
             onValueChange={handleBackgroundSelect}
             className="grid grid-cols-3 gap-2"
           >
@@ -118,7 +155,7 @@ export function BackgroundSelector({ currentBackground, onBackgroundChange }: Ba
                   htmlFor={bg.id}
                   className="cursor-pointer block h-20 rounded-md overflow-hidden border-2 transition-all"
                   style={{
-                    borderColor: selectedBackground === bg.id ? "rgb(147, 51, 234)" : "transparent",
+                    borderColor: selectedBackgroundUrl === bg.id ? "rgb(147, 51, 234)" : "transparent",
                   }}
                 >
                   {bg.type === "solid" ? (
@@ -165,26 +202,6 @@ export function BackgroundSelector({ currentBackground, onBackgroundChange }: Ba
                 </Button>
               </div>
             </div>
-
-            {isGeneratingAI ? (
-              <div className="flex justify-center items-center h-40 border-2 border-dashed rounded-md">
-                <div className="text-center">
-                  <RefreshCw className="h-8 w-8 text-purple-600 animate-spin mx-auto mb-2" />
-                  <p className="text-muted-foreground">Đang tạo hình nền...</p>
-                </div>
-              </div>
-            ) : currentBackground?.aiGenerated ? (
-              <div className="space-y-2">
-                <div className="border-2 border-purple-300 rounded-md overflow-hidden">
-                  <img
-                    src={currentBackground.url || "/placeholder.svg"}
-                    alt="AI Generated Background"
-                    className="w-full h-40 object-cover"
-                  />
-                </div>
-                <p className="text-sm text-muted-foreground">Mô tả: {currentBackground.prompt || aiPrompt}</p>
-              </div>
-            ) : null}
           </div>
         </TabsContent>
 
@@ -203,7 +220,7 @@ export function BackgroundSelector({ currentBackground, onBackgroundChange }: Ba
               id="bg-upload" type="file" onChange={handleFileUpload} />
           </div>
 
-          {currentBackground?.type === "image" && activeTab === "upload" && (
+          {/* {currentBackground?.type === "image" && activeTab === "upload" && (
             <div className="mt-4">
               <p className="text-sm font-medium mb-2">Hình nền hiện tại:</p>
               <div className="border rounded-md overflow-hidden">
@@ -214,9 +231,13 @@ export function BackgroundSelector({ currentBackground, onBackgroundChange }: Ba
                 />
               </div>
             </div>
-          )}
+          )} */}
         </TabsContent>
       </Tabs>
+
+      {RenderSelectedBackgroundImage()}
+      
+
     </div>
   )
 }
