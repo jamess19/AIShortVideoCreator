@@ -201,22 +201,22 @@ export default function ScenesPage() {
 
       setIsSaving(true)
 
-      // const response = await CreateVideoApi(request)
-      // if(response && response.secure_url !== ""){
-      //   toast({
-      //     title: "Lưu thành công",
-      //     description: "Cấu hình cảnh đã được lưu",
-      //   })
+      const response = await CreateVideoApi(request)
+      if(response && response.secure_url !== ""){
+        toast({
+          title: "Lưu thành công",
+          description: "Cấu hình cảnh đã được lưu",
+        })
   
-      //   router.push(`/video/${response.public_id}/edit`);
-      // }
-      // else{
-      //   toast({
-      //     title: "Lỗi",
-      //     description: "Không thể lưu cấu hình cảnh. Vui lòng thử lại sau.",
-      //     variant: "destructive",
-      //   })
-      // }
+        router.push(`/video/${response.public_id}/edit`);
+      }
+      else{
+        toast({
+          title: "Lỗi",
+          description: "Không thể lưu cấu hình cảnh. Vui lòng thử lại sau.",
+          variant: "destructive",
+        })
+      }
     } catch (error) {
       console.error("Error saving video:", error)
       setIsSaving(false)

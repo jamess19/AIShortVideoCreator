@@ -29,17 +29,6 @@ export const CreateVideoApi = async (request : any) => {
     }
 }
 
-// Search query -> oke
-export const searchTrendingVideos = async (keyword: string) => {
-    try {
-    const response = await api.get(`/search/${encodeURIComponent(keyword)}`)
-    return response.data; // List[ExternalItem]
-    } catch (error) {
-    console.error("Search trending failed:", error);
-    throw error;
-    }
-}
-
 // upload video
 export const uploadVideoToYoutubeApi = async (request: any) => {
     try {
