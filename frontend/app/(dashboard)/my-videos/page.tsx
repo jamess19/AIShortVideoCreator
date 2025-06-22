@@ -29,9 +29,8 @@ import { VideoPlayer } from "@/components/video-player";
 import { VideoThumbnail } from "@/components/video-thumbnail";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { getFacebookAccessToken, getFacebookthUrlApi, getYoutubeAccessToken,
-  GetVideosApi,
-   getYoutubeAuthUrlApi, uploadVideoApi } from "@/services/video_api";
+import { GetVideosApi,uploadVideoToYoutubeApi } from "@/services/video_api";
+import { getYoutubeAuthUrlApi, getYoutubeAccessToken } from "@/services/user_api";
 import { Video } from "@/lib/models";
 
 const mockVideos : Video[] = [
@@ -115,7 +114,6 @@ export default function MyVideosPage() {
   const [hoveredVideo, setHoveredVideo] = useState<string | null>(null);
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
   const [videos, setVideos] = useState<Video[]>([]);
-
   const [uploadVideoField, setUploadVideoField] = useState<UploadVideoField>({
     title: "",
     description: "",
@@ -123,6 +121,13 @@ export default function MyVideosPage() {
     category: "",
     privateStatus: ""
   });
+  const [shareDialog, setDialog] = useState<"choosePlatform" | "videoInfor" |"uploading" | "success" | "fail" | null>(null)
+  const [platform, setPlatform] = useState<"youtube" | "facebook" | null>(null)
+  const [openDialog, setOpenDialog] = useState<"Video" | "Share" | null>(null)
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadResult, setUploadResult] = useState<string>("");
+
+  const redirect_uri = "http://localhost:3000/my-videos"
   const filteredVideos = videos.filter((video) => {
     if (activeTab === "all") return true;
     if (activeTab === "published") return video.status === "published";
@@ -134,12 +139,6 @@ export default function MyVideosPage() {
   ).length;
   const draftCount = videos.filter((video) => video.status === "draft").length;
   const totalCount = videos.length;
-  
-  const [shareDialog, setDialog] = useState<"choosePlatform" | "videoInfor" |"uploading" | "success" | "fail" | null>(null)
-  const [platform, setPlatform] = useState<"youtube" | "facebook" | null>(null)
-  const [uploadProgress, setUploadProgress] = useState<number>(0)
-  const [openDialog, setOpenDialog] = useState<"Video" | "Share" | null>(null)
-  const redirect_uri = "http://localhost:3000/my-videos"
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -149,10 +148,9 @@ export default function MyVideosPage() {
     if (code && platform != null) {
       if(platform === "youtube") {
       getYoutubeAccessToken(code, redirect_uri)
-        .then((token) => {
-          if (token) {
-            sessionStorage.setItem("youtubeToken", token);
-            console.log(token);
+        .then((response) => {
+          if (response.status_code === 200) {
+            sessionStorage.setItem("youtubeToken", response.access_token);
             window.location.replace("/my-videos");
           }
         })
@@ -161,20 +159,20 @@ export default function MyVideosPage() {
           console.log(error)
         });
       }
-      if(platform === "facebook"){
-        getFacebookAccessToken(code, redirect_uri)
-        .then((token) => {
-          if (token) {
-            sessionStorage.setItem("facebookToken", token);
-            console.log(token);
-            window.location.replace("/my-videos");
-          }
-        })
-        .catch((error) => {
-          window.location.replace("/my-videos");
-          console.log(error)
-        });
-      }
+      // if(platform === "facebook"){
+      //   getFacebookAccessToken(code, redirect_uri)
+      //   .then((token) => {
+      //     if (token) {
+      //       sessionStorage.setItem("facebookToken", token);
+      //       console.log(token);
+      //       window.location.replace("/my-videos");
+      //     }
+      //   })
+      //   .catch((error) => {
+      //     window.location.replace("/my-videos");
+      //     console.log(error)
+      //   });
+      // }
     }
   }, []);
   useEffect(() => {
@@ -230,57 +228,74 @@ export default function MyVideosPage() {
     sessionStorage.setItem("platform", platform);
     if(platform === "youtube" && sessionStorage.getItem("youtubeToken") === null) {
       const response = await getYoutubeAuthUrlApi(redirect_uri)
-      if(response) {
-      window.location.href = response;
+      console.log(response);
+      if(response.status_code === 200) {
+        window.location.href = response.auth_url;
+      }
     }
-    }
-    else if (platform === "facebook" && sessionStorage.getItem("facebookToken") === null ) {
-      const response = await getFacebookthUrlApi(redirect_uri)
-      if(response) {
-      window.location.href = response;
-    }
-
-    }
+    // else if (platform === "facebook" && sessionStorage.getItem("facebookToken") === null ) {
+    //   const response = await getFacebookthUrlApi(redirect_uri)
+    //   if(response) {
+    //   window.location.href = response;
+    //   }
+    // }
     setDialog("videoInfor")
   }
 
   const handleSubmitVideoInfor = async () => {
-    setDialog("uploading");
-    setUploadProgress(0);
+    setIsUploading(true);
 
     try{
       const youtubeToken = sessionStorage.getItem("youtubeToken");
-
       const request = {
-        id: 1,
+        video_public_id: selectedVideo?.public_id || "",
         title: uploadVideoField.title,
         description: uploadVideoField.description,
         keyword: uploadVideoField.keyword,
         category: uploadVideoField.category,
         privateStatus: uploadVideoField.privateStatus,
         videoUrl: selectedVideo?.video_url || "",
+        accessToken: youtubeToken || "",
       }
 
-      if(youtubeToken) {
-        const response = await uploadVideoApi(request, youtubeToken)
-        // Giả lập tiến trình upload
-        for (let i = 1; i <= 100; i++) {
-          await new Promise((r) => setTimeout(r, 15));
-          setUploadProgress(i);
-        }
+      const response = await uploadVideoToYoutubeApi(request)
+      console.log("Upload response:", response);
+      if(!response || response.status_code !== 200) {
+        throw new Error(`Upload failed with status code: ${response.status_code}`);
       }
-      setDialog("success");
+      setUploadResult("success");
 
       // Tự động đóng dialog sau 1.5s
       setTimeout(() => {
         setDialog(null);
-        setUploadProgress(0);
-        setPlatform(null);
-        setSelectedVideo(null);
-      }, 1500);
+        setUploadResult("");
+      }, 3000);
     } catch (err) {
-      setDialog("fail");
       console.error("Error uploading video:", err);
+      setUploadResult("fail");
+
+      setTimeout(() => {
+        setDialog(null);
+        setUploadResult("");
+      }, 3000);
+    }
+    finally{
+      setIsUploading(false);
+      // Đợi 1.5s cho user đọc thông báo rồi mới reset toàn bộ
+      setTimeout(() => {
+        setDialog(null);
+        setOpenDialog(null);
+        setUploadResult("");
+        setSelectedVideo(null);
+        setPlatform(null);
+        setUploadVideoField({
+          title: "",
+          description: "",
+          keyword: "",
+          category: "",
+          privateStatus: ""
+        });
+      }, 3000);
     }
   };
   return (
@@ -396,12 +411,12 @@ export default function MyVideosPage() {
                     <span>Sửa</span>
                   </button>
                   <button className="bg-white text-gray-800 px-3 py-1.5 rounded-md flex items-center gap-1 text-sm w-28 justify-center"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedVideo(video);
-                    setDialog("choosePlatform")
-                    setOpenDialog("Share")
-                  }}>
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedVideo(video);
+                      setDialog("choosePlatform")
+                      setOpenDialog("Share")
+                    }}>
                     <Share2 size={14} />
                     <span>Chia sẻ</span>
                   </button>
@@ -472,35 +487,34 @@ export default function MyVideosPage() {
        open={(!!shareDialog && openDialog === "Share")}
        onOpenChange={(open) => !open && setDialog(null) && setOpenDialog(null) }
        >
-       <DialogContent className="sm:max-w-[400px] flex flex-col items-center gap-6 py-8">
-         {shareDialog === "choosePlatform" && (
-         <div className="flex flex-col items-center gap-2">
-           <DialogTitle>Chia sẻ video lên nền tảng</DialogTitle>
-           <div className="flex gap-8 mt-2 items-center">
-             <button
-               onClick={() => handlePlatfromChoiceClick("youtube")}
-               className="flex flex-col items-center hover:scale-110 transition">
-               <Youtube size={36} className="text-red-600" />
-               <span className="mt-2">YouTube</span>
-             </button>
+        <DialogContent className="sm:max-w-[400px] flex flex-col items-center gap-6 py-8">
+          {shareDialog === "choosePlatform" && (
+          <div className="flex flex-col items-center gap-2">
+            <DialogTitle>Chia sẻ video lên nền tảng</DialogTitle>
+            <div className="flex gap-8 mt-2 items-center">
+              <button
+                onClick={() => handlePlatfromChoiceClick("youtube")}
+                className="flex flex-col items-center hover:scale-110 transition">
+                <Youtube size={36} className="text-red-600" />
+                <span className="mt-2">YouTube</span>
+              </button>
 
-             <button
-               onClick={() => handlePlatfromChoiceClick("facebook")}
-               className="flex flex-col items-center hover:scale-110 transition"
-             >
-               <Facebook size={36} className="text-blue-600" />
-               <span className="mt-2">Facebook</span>
-             </button>
-           </div>
-         </div>
+              <button
+                disabled
+                onClick={() => handlePlatfromChoiceClick("facebook")}
+                className="flex flex-col items-center hover:scale-110 transition">
+                <Facebook size={36} className="text-blue-600" />
+                <span className="mt-2">Facebook (sắp ra mắt) </span>
+              </button>
+            </div>
+          </div>
          
        )}
 
         {shareDialog === "videoInfor" && (
             <form
               className="flex flex-col gap-4 w-full"
-              onSubmit={e => {
-                
+              onSubmit={e => { 
                 e.preventDefault();
                 handleSubmitVideoInfor()
               }}
@@ -556,6 +570,7 @@ export default function MyVideosPage() {
                   required
                 />
               </div>
+
               {/* Lấy danh sách category từ youtube (dùng api) */}
               {/* <div>
                 <label className="block font-light mb-1">Thể loại</label>
@@ -571,6 +586,7 @@ export default function MyVideosPage() {
               </Select>
               </div> */}
 
+              { /* Chọn chế độ hiển thị video */}
               <div>
                 <label className="block font-light mb-1">Chế độ hiển thị</label>
                <Select value={uploadVideoField.privateStatus}
@@ -590,55 +606,36 @@ export default function MyVideosPage() {
                 </SelectContent>
               </Select>
               </div>
+              {/* Nút bắt đầu upload video */}
+              { isUploading ? (
+                <div className="flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+                  <span className="ml-2 text-gray-600">Đang upload...</span>
+                </div>
+                ) : (
+                <Button
+                  type="submit"
+                  className="bg-purple-600 text-white rounded px-4 py-2 mt-2 hover:bg-purple-700">
+                  Bắt đầu upload
+                </Button>)}
+              { uploadResult === "success" && (
+                <div className="flex items-center justify-center text-green-600">
+                  <CheckCircle size={20} className="mr-2" />
+                  <span>Upload thành công!</span>
+                </div>
+                )}
+              { uploadResult === "fail" && 
+                (
+                <div className="flex items-center justify-center text-red-600">
+                  <UploadCloud size={20} className="mr-2" />
+                  <span>Upload thất bại, vui lòng thử lại.</span>
+                </div>
+                )
+              }
 
-               <Button
-                type="submit"
-                className="bg-purple-600 text-white rounded px-4 py-2 mt-2 hover:bg-purple-700"
-              >
-                Bắt đầu upload
-              </Button>
             </form>
           )}
-
-       {shareDialog === "uploading" && (
-         <div className="flex flex-col items-center">
-           <DialogTitle className='mb-2'>
-             <div className="flex">
-               <UploadCloud className="mr-2"/>
-               Đang tải lên {platform === "youtube" ? "YouTube" : "Facebook"}
-             </div>
-           </DialogTitle>
-           <div className="w-64 h-4 bg-gray-200 rounded-full overflow-hidden">
-             <div
-               className="h-full bg-purple-600 transition-all"
-               style={{ width: `${uploadProgress}%` }}
-             />
-           </div>
-           <div className="text-sm text-gray-700">{uploadProgress}%</div>
-         </div>
-       )}
-
-
-       {shareDialog === "success" && (
-         <div className="flex flex-col items-center">
-           <DialogTitle className='mb-2 text-green-600 flex items-center gap-2'>
-             <CheckCircle className="mr-2" /> Đã upload thành công!
-           </DialogTitle>
-         </div>
-       )}
-
-
-       {shareDialog === "fail" && (
-         <div className="flex flex-col items-center">
-           <DialogTitle className='mb-2 text-red-600'>Upload thất bại!</DialogTitle>
-           <button
-             className="mt-4"
-             onClick={() => setDialog("choosePlatform")}
-           >
-             Thử lại
-           </button>
-         </div>
-       )}
+          
        </DialogContent>
      </Dialog>
     </div>

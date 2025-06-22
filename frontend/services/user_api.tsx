@@ -15,6 +15,30 @@ export const LogInApi = async (signInRequest) => {
         throw error;
     }
 }
+export const getYoutubeAuthUrlApi = async (redirect_uri: string) => {
+    try {
+        const response = await api.get(`/user/signin/to-youtube`, {
+            params: {redirect_uri}
+        });
+        return response.data;
+    }
+    catch (error) {
+        console.log("Error get auth url youtube", error)
+        throw error;
+    }
+}
+export const getYoutubeAccessToken = async (code: string, redirect_uri: string) =>  {
+    try {
+        const response = await api.get(`/user/signin/to-youtube/access-token`, {
+            params: {code, redirect_uri}
+        })
+        return response.data;
+    }
+    catch (error) {
+        console.log("error in get access token", error);
+        throw error;
+    }
+}
 export const RegisterApi = async (signUpRequest) => {
     try {
         const response = await api.post("/user", signUpRequest);

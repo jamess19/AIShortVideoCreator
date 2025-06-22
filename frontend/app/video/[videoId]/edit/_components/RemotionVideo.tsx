@@ -96,29 +96,33 @@ export const MyVideo = ({videoUrl, attachments}: videoProps) => {
           {
             const isSelected = selectedItem?.itemId === text.id && selectedItem.type === 'texts'
             
-            return (<div
-            key={text.id}
-            
+            return (
+            <div
+              key={text.id}
               draggable
               onDragEnd={(e) => handleDrag(e, text.id, "text")}
               onClick={(e) => {
-              e.stopPropagation();
-              setSelectedItem({
-                itemId: text.id,
-                type: "texts",
-              });
-            }}
+                e.stopPropagation();
+                setSelectedItem({
+                  itemId: text.id,
+                  type: "texts",
+                });
+              }}
               style={{
-              position: "absolute",
-              left: `${text.position.x}%`,
-              top: `${text.position.y}%`,
-              transform: "translate(-50%, -50%)",
-              cursor: "move",
-              border: isSelected ? "2px solid blue" : "none",
-              borderRadius: "8px", // bo viền tròn đẹp hơn
-              padding: "2px",
-              visibility: currentTimeInSeconds >= text.startTime && currentTimeInSeconds <= text.endTime ? 'visible' : 'hidden',
-              }}        >
+                color: text.style.color,
+                fontFamily: text.style.fontFamily,
+                fontSize: `${text.style.fontSize}px`,
+                position: "absolute",
+                left: `${text.position.x}%`,
+                top: `${text.position.y}%`,
+                transform: "translate(-50%, -50%)",
+                cursor: "move",
+                border: isSelected ? "2px solid blue" : "none",
+                borderRadius: "8px", // bo viền tròn đẹp hơn
+                padding: "2px",
+                visibility: currentTimeInSeconds >= text.startTime && currentTimeInSeconds <= text.endTime ? 'visible' : 'hidden',
+              }}
+            >
           {text.content}
           {isSelected && (
             <X

@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, Youtube, TrendingUp } from "lucide-react"
@@ -19,9 +18,6 @@ export function TrendingContent({ contents, onSelect }: TrendingContentProps) {
     { id: "youtube", name: "YouTube" },
     { id: "tiktok", name: "TikTok" },
   ]
-
-  // const filteredContents =
-  //   selectedPlatform === "all" ? contents : contents.filter((content) => content.platform === selectedPlatform)
 
   const getPlatformIcon = (platform: string) => {
     switch (platform) {
@@ -43,21 +39,6 @@ export function TrendingContent({ contents, onSelect }: TrendingContentProps) {
 
   return (
     <div>
-      {/* <div className="flex flex-wrap gap-2 mb-6">
-        {platforms.map((platform) => (
-          <Badge
-            key={platform.id}
-            variant={selectedPlatform === platform.id ? "default" : "outline"}
-            className={`text-sm py-1 px-3 cursor-pointer ${
-              selectedPlatform === platform.id ? "bg-purple-600 hover:bg-purple-700" : ""
-            }`}
-            onClick={() => setSelectedPlatform(platform.id)}
-          >
-            {platform.name}
-          </Badge>
-        ))}
-      </div> */}
-
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {contents.map((content) => (
           <Card key={content.id} className="overflow-hidden hover:shadow-md transition-shadow">
@@ -69,12 +50,6 @@ export function TrendingContent({ contents, onSelect }: TrendingContentProps) {
               />
               <div className="p-4">
                 <div className="flex justify-between items-center mb-2">
-                  {/* <div className="flex items-center">
-                    {getPlatformIcon(content.platform)}
-                    <Badge variant="outline" className="text-xs ml-2">
-                      #{content.trending_rank}
-                    </Badge>
-                  </div> */}
                   <span className="text-xs text-muted-foreground">{content.viewCount} lượt xem</span>
                 </div>
                 <h3 className="font-medium mb-2">{content.title}</h3>
