@@ -47,11 +47,11 @@ function Preview() {
           start_time: text_attachment.startTime,
           end_time: text_attachment.endTime,
           position: {
-            x: text_attachment.position.x,
-            y: text_attachment.position.y,
+            x: text_attachment.position.x / 100,
+            y: text_attachment.position.y / 100,
           },
           font_size: text_attachment.style.fontSize,
-          color: text_attachment.style.color,
+          color_hex: text_attachment.style.color,
         })),
         emoji_attachments: attachments.emojis.map((emoji_attachment) => ({
           emoji: "",
@@ -59,8 +59,8 @@ function Preview() {
           end_time: emoji_attachment.endTime,
           codepoint: emoji_attachment.codepoint,
           position: {
-            x: emoji_attachment.position.x,
-            y: emoji_attachment.position.y,
+            x: emoji_attachment.position.x / 100,
+            y: emoji_attachment.position.y /100,
           },
           size: emoji_attachment.size
         })),

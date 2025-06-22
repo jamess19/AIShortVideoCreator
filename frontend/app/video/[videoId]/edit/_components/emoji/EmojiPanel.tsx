@@ -18,7 +18,7 @@ function EmojiPanel() {
       position: { x: 50, y: 50 }, // Mặc định ở giữa
       size: 64, // Kích thước mặc định
       startTime: videoData.currentTime,
-      endTime: videoData.currentTime + 20, // Mặc định hiển thị đến hết video
+      endTime: videoData.currentTime + 1, // Mặc định hiển thị đến hết video
     })
   }
 

@@ -43,7 +43,7 @@ export const uploadVideoToYoutubeApi = async (request: any) => {
 
 export const EditVideoApi = async (request: any) =>{
     try {
-        const response = await api.put(`/video/${request.videoId}`, request);
+        const response = await api.put(`/video/${request.public_id}`, request);
         return response.data;
     } catch (error) {
         console.error("Error updating video:", error);
