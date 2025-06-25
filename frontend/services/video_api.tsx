@@ -59,9 +59,10 @@ export const GetVideoByIdApi = async (videoId: string) => {
         throw error;
     }
 }
-export const GetVideosApi = async()  => {
+export const GetVideosApi = async(request: any)  => {
     try {
-        const response = await api.get("/video");
+        const url = `/video?${new URLSearchParams(request).toString()}`;
+        const response = await api.get(url);
         return response.data; 
     } catch (error) {
         console.error("Error fetching videos:", error);

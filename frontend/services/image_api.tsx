@@ -19,6 +19,6 @@ export const GenerateImageApi = async (request: GenerateImageRequest) => {
 
 export interface GenerateImageRequest {
     content: string;
-    width: number;
-    height: number;
+    style?: string;
+    image_ratio?: string;
 }

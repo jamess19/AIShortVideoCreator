@@ -6,6 +6,7 @@ import { useRef, useState } from "react"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Upload, Sparkles, RefreshCw } from "lucide-react"
@@ -14,18 +15,33 @@ import { GenerateImageApi, GenerateImageRequest } from "@/services/image_api"
 interface BackgroundSelectorProps {
   currentBackgroundUrl?: string
   currentBackgroundPublicId?: string
+  textContentOfScene?: string
   onBackgroundChange: (content?: File, publicId?: string, url?: string) => void
 }
 
-export function BackgroundSelector({ currentBackgroundUrl: currentBackgroundUrl,currentBackgroundPublicId, onBackgroundChange }: BackgroundSelectorProps) {
+const styleOptions = [
+  { value: "cartoon", label: "Hoạt hình" },
+  { value: "minimalist", label: "Tối giản" },
+  { value: "classic", label: "Cổ điển" },
+  { value: "modern", label: "Hiện đại" },
+  { value: "watercolor", label: "Màu nước" },
+  { value: "oil-painting", label: "Sơn dầu" },
+  { value: "digital-art", label: "Nghệ thuật số" },
+  { value: "photorealistic", label: "Chân thực" },
+]
+
+export function BackgroundSelector({ currentBackgroundUrl: currentBackgroundUrl,
+                                currentBackgroundPublicId, textContentOfScene,
+                                 onBackgroundChange }: BackgroundSelectorProps) {
   const imageInputRef = useRef<HTMLInputElement>(null)
   const [activeTab, setActiveTab] = useState<string>("templates")
+  const [selectedStyle, setSelectedStyle] = useState("")
   const [isGeneratingAI, setIsGeneratingAI] = useState(false)
-  const [aiPrompt, setAiPrompt] = useState("")
+
   const { toast } = useToast()
   const selectedBackgroundUrl = currentBackgroundUrl
   const selectedBackgroundPublicId = currentBackgroundPublicId || "uploaded"
-  
+
   const backgrounds = [
     { id: "bg1", type: "solid", color: "bg-gradient-to-r from-purple-500 to-pink-500" },
     { id: "bg2", type: "solid", color: "bg-gradient-to-r from-cyan-500 to-blue-500" },
@@ -60,7 +76,7 @@ export function BackgroundSelector({ currentBackgroundUrl: currentBackgroundUrl,
   const generateAIBackground = async () => {
     try{
    
-     if (!aiPrompt.trim()) {
+     if (!textContentOfScene || !textContentOfScene.trim()) {
         toast({
           title: "Vui lòng nhập mô tả",
           description: "Nhập mô tả để AI tạo hình nền",
@@ -72,9 +88,9 @@ export function BackgroundSelector({ currentBackgroundUrl: currentBackgroundUrl,
       setIsGeneratingAI(true)
 
       const request: GenerateImageRequest = {
-        content: aiPrompt,
-        width: 800,
-        height: 600,
+        content: textContentOfScene,
+        style: selectedStyle,
+        image_ratio: "16:9",
       }
 
       const response = await GenerateImageApi(request)
@@ -137,8 +153,10 @@ export function BackgroundSelector({ currentBackgroundUrl: currentBackgroundUrl,
           <TabsTrigger value="ai" className="flex-1">
             Tạo bằng AI
           </TabsTrigger>
-          <TabsTrigger value="upload" className="flex-1">
-            Tải lên
+          <TabsTrigger 
+            disabled
+            value="upload" className="flex-1">
+            Tải lên (sắp ra mắt)
           </TabsTrigger>
         </TabsList>
 
@@ -171,21 +189,39 @@ export function BackgroundSelector({ currentBackgroundUrl: currentBackgroundUrl,
 
         <TabsContent value="ai" className="space-y-4">
           <div className="space-y-4">
-            <div>
-              <Label htmlFor="ai-prompt" className="block mb-2">
-                Mô tả hình nền bạn muốn
+            {/* Thông báo thay thế Input */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <p className="text-sm text-blue-700">
+                <Sparkles className="inline h-4 w-4 mr-1" />
+                Hệ thống sẽ tự động tạo hình nền dựa trên nội dung của cảnh này. Chỉ cần chọn phong cách và nhấn tạo hình!
+              </p>
+            </div>
+
+            {/* Chọn phong cách */}
+            <div className="space-y-2">
+              <Label htmlFor="style-select" className="text-sm font-medium text-gray-700">
+                Chọn phong cách hình ảnh
               </Label>
               <div className="flex gap-2">
-                <Input
-                  className="bg-white border border-gray-300 focus:border-purple-500 focus:ring-purple-500"
-                  id="ai-prompt"
-                  placeholder="Ví dụ: Cảnh biển xanh với bầu trời trong vắt..."
-                  value={aiPrompt}
-                  onChange={(e) => setAiPrompt(e.target.value)}
-                />
+                <Select value={selectedStyle} onValueChange={setSelectedStyle}>
+                  <SelectTrigger className="bg-white border border-gray-300 focus:border-purple-500 flex-1">
+                    <SelectValue placeholder="Chọn phong cách..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-md">
+                    {styleOptions.map((style) => (
+                      <SelectItem 
+                        className="hover:bg-gray-100 focus:bg-gray-100 cursor-pointer text-gray-700"
+                        key={style.value} value={style.value}>
+                        {style.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {/* Button tạo hình */}
                 <Button
                   onClick={generateAIBackground}
-                  disabled={isGeneratingAI || !aiPrompt.trim()}
+                  disabled={isGeneratingAI || !selectedStyle}
                   className="bg-purple-600 hover:bg-purple-700 whitespace-nowrap"
                 >
                   {isGeneratingAI ? (
@@ -196,7 +232,7 @@ export function BackgroundSelector({ currentBackgroundUrl: currentBackgroundUrl,
                   ) : (
                     <>
                       <Sparkles className="mr-2 h-4 w-4" />
-                      Tạo hình
+                      Tạo hình nền
                     </>
                   )}
                 </Button>

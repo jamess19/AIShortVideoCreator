@@ -20,7 +20,7 @@ export default function TrendingSearch({
     setIsSearching(true)
 
     try {
-      const response = await GetTrendingContentsInYoutubeApi(keyword,10)
+      const response = await GetTrendingContentsInYoutubeApi(keyword,15)
       setSearchResults(response.data || [])
     } catch (error) {
       console.log(error)

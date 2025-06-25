@@ -85,7 +85,8 @@ export function SceneEditor({ scene, onUpdate,
           </TabsContent>
 
           <TabsContent value="background">
-            <BackgroundSelector 
+            <BackgroundSelector
+              textContentOfScene={scene.text}
               currentBackgroundUrl={currentBackgroundUrl}
               currentBackgroundPublicId={currentBackgroundPublicId}
               onBackgroundChange={(content?: File, publicId?: string,url?: string) => handleBackgroundChangeForParent(content, publicId,url)} />
