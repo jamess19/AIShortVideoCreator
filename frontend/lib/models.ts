@@ -46,3 +46,9 @@ export interface Video{
   duration: number;
   can_edit: boolean;
 }
+export interface StatasticResponse{
+  videoId: string;
+  totalView: number;
+  totalLike: number;
+  totalComment: number;
+}

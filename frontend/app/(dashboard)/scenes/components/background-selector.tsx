@@ -15,7 +15,7 @@ import { GenerateImageApi, GenerateImageRequest } from "@/services/image_api"
 interface BackgroundSelectorProps {
   currentBackgroundUrl?: string
   currentBackgroundPublicId?: string
-  textContentOfScene?: string
+  bgImageDescriptionOfScene?: string
   onBackgroundChange: (content?: File, publicId?: string, url?: string) => void
 }
 
@@ -31,7 +31,7 @@ const styleOptions = [
 ]
 
 export function BackgroundSelector({ currentBackgroundUrl: currentBackgroundUrl,
-                                currentBackgroundPublicId, textContentOfScene,
+                                currentBackgroundPublicId, bgImageDescriptionOfScene: bgImageDescriptionOfScene,
                                  onBackgroundChange }: BackgroundSelectorProps) {
   const imageInputRef = useRef<HTMLInputElement>(null)
   const [activeTab, setActiveTab] = useState<string>("templates")
@@ -76,7 +76,7 @@ export function BackgroundSelector({ currentBackgroundUrl: currentBackgroundUrl,
   const generateAIBackground = async () => {
     try{
    
-     if (!textContentOfScene || !textContentOfScene.trim()) {
+     if (!bgImageDescriptionOfScene || !bgImageDescriptionOfScene.trim()) {
         toast({
           title: "Vui lòng nhập mô tả",
           description: "Nhập mô tả để AI tạo hình nền",
@@ -88,7 +88,7 @@ export function BackgroundSelector({ currentBackgroundUrl: currentBackgroundUrl,
       setIsGeneratingAI(true)
 
       const request: GenerateImageRequest = {
-        content: textContentOfScene,
+        content: bgImageDescriptionOfScene,
         style: selectedStyle,
         image_ratio: "16:9",
       }

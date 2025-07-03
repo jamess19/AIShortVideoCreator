@@ -61,10 +61,11 @@ export default function ScenesPage() {
   const { toast } = useToast()
 
   useEffect(() => {
-    const GetVideoScriptMetadata = async (request) => {
+    const GetVideoScriptMetadata = async (request: any) => {
       try {
         const response = await GetVideoScriptMetadataApi(request)
         if (response && response.message === "success") {
+          console.log("Script metadata fetched successfully:", response)
           setScriptJson(response.data)
           localStorage.setItem("selectedScript", JSON.stringify(response.data))
           if (response.data.scenes && response.data.scenes.length > 0) {
@@ -204,7 +205,7 @@ export default function ScenesPage() {
       const response = await CreateVideoApi(request)
       if(response && response.secure_url !== ""){
         toast({
-          title: "Lưu thành công",
+          title: "Lưu video thành công",
           description: "Cấu hình cảnh đã được lưu",
         })
   

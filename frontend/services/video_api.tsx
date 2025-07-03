@@ -1,10 +1,12 @@
 import axios from "axios";
 
-const BASE_URL = "http://localhost:8000/api/v1";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL + "/api/v2";
+const BASE_URL =  "http://localhost:8000/api/v1"; // Fallback base URL for local development
 const api = axios.create({
-    baseURL: BASE_URL,
-    //timeout: 50000,
+    baseURL: API_BASE_URL || BASE_URL,
+    timeout: 100000
 });
+
 api.interceptors.request.use(
     (config) => {
         const accessToken = localStorage.getItem("accessToken");
