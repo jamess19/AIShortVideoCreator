@@ -18,6 +18,7 @@ interface StatisticInfo{
     favoriteCount: number,
     commentCount: number,
 }
+
 interface statsData {
   totalVideos: number,
   totalViews: number,

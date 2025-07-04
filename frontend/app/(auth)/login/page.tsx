@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Video } from "lucide-react";
+import { Video, Circle } from "lucide-react";
 import { useState } from "react";
 import { LogInApi } from "@/services/user_api";
 import { useRouter } from "next/navigation";
@@ -15,25 +15,33 @@ export default function LoginPage() {
     username: "",
     password: "",
   });
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   const HandleLogin = async () => {
-    console.log("Logging in with", loginRequest);
+    try{
+      setIsLoggingIn(true);
+      const response = await LogInApi(loginRequest);
 
-    const response = await LogInApi(loginRequest);
-
-    if(response) {
-      if(response.status === "success") {
-        localStorage.setItem("accessToken", response.access_token);
-        localStorage.setItem("username", response.username);
-        console.log("Login successful", response.message);
-        router.push("/statistic");
+      if(response) {
+        if(response.status === "success") {
+          localStorage.setItem("accessToken", response.access_token);
+          localStorage.setItem("username", response.username);
+          console.log("Login successful", response.message);
+          router.push("/statistics");
+        }
+        else{
+          console.log("Login failed: ", response.message);
+        }
       }
-      else{
-        console.log("Login failed: ", response.message);
+      else {
+        console.log("Login failed");
       }
     }
-    else {
-      console.log("Login failed");
+    catch (error) {
+      console.error("Error during login:", error);
+    }
+    finally {
+      setIsLoggingIn(false);
     }
   };
 
@@ -98,11 +106,21 @@ export default function LoginPage() {
               className="bg-white border-gray-300 text-black placeholder:text-gray-400 focus:placeholder-transparent"
             />
           </div>
-          <Button
+          
+          {!isLoggingIn ? <Button
             onClick={HandleLogin} 
             className="w-full mt-6 bg-purple-600 hover:bg-purple-700">
             Đăng nhập
           </Button>
+          : (
+            <Button
+              disabled
+              className="w-full mt-6 bg-purple-600 hover:bg-purple-700"
+            >
+              <Circle className="animate-spin h-5 w-5 mr-2" />
+              Đang đăng nhập...
+            </Button>
+          )}
           <div className="text-center text-sm mt-4 text-gray-600">
             Chưa có tài khoản?{" "}
             <Link href="/register" className="text-purple-600 hover:underline">
