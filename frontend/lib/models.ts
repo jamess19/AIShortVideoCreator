@@ -1,4 +1,3 @@
-
 export interface Scene{
     scene_id: number
     start_time: number

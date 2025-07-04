@@ -10,40 +10,108 @@ export function PerformanceChart() {
     { day: "T6", views: 3200, likes: 234 },
     { day: "T7", views: 2800, likes: 198 },
     { day: "CN", views: 2100, likes: 156 },
-  ]
+  ];
 
-  const maxViews = Math.max(...chartData.map((d) => d.views))
+  const width = 600; // tăng width gốc để viewBox rộng hơn
+  const height = 200;
+  const padding = 40;
+  const maxViews = Math.max(...chartData.map((d) => d.views));
+  const minViews = Math.min(...chartData.map((d) => d.views));
+  const stepX = (width - 2 * padding) / (chartData.length - 1);
+
+  const points = chartData.map((d, i) => {
+    const x = padding + i * stepX;
+    const y =
+      height -
+      padding -
+      ((d.views - minViews) / (maxViews - minViews || 1)) * (height - 2 * padding);
+    return [x, y];
+  });
+
+  const linePath = points
+    .map(([x, y], i) => (i === 0 ? `M${x},${y}` : `L${x},${y}`))
+    .join(" ");
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between text-sm">
-        <span className="text-muted-foreground">Lượt xem</span>
-        <span className="text-muted-foreground">7 ngày qua</span>
-      </div>
-
-      <div className="h-48 flex items-end justify-between space-x-2">
-        {chartData.map((data, index) => (
-          <div key={index} className="flex flex-col items-center space-y-2 flex-1">
-            <div className="w-full bg-gray-200 rounded-t relative" style={{ height: "120px" }}>
-              <div
-                className="bg-purple-500 rounded-t transition-all duration-300 hover:bg-purple-600"
-                style={{
-                  height: `${(data.views / maxViews) * 100}%`,
-                  width: "100%",
-                  position: "absolute",
-                  bottom: 0,
-                }}
-              />
-            </div>
-            <span className="text-xs font-medium">{data.day}</span>
-          </div>
+    <div className="w-full">
+      <svg
+        width="100%"
+        height={height}
+        viewBox={`0 0 ${width} ${height}`}
+        className="block"
+        preserveAspectRatio="none"
+      >
+        {/* Trục X */}
+        <line
+          x1={padding}
+          y1={height - padding}
+          x2={width - padding}
+          y2={height - padding}
+          stroke="#e5e7eb"
+          strokeWidth={2}
+        />
+        {/* Trục Y */}
+        <line
+          x1={padding}
+          y1={padding}
+          x2={padding}
+          y2={height - padding}
+          stroke="#e5e7eb"
+          strokeWidth={2}
+        />
+        {/* Đường biểu đồ */}
+        <path
+          d={linePath}
+          fill="none"
+          stroke="#a78bfa"
+          strokeWidth={3}
+        />
+        {/* Các điểm tròn */}
+        {points.map(([x, y], i) => (
+          <circle
+            key={i}
+            cx={x}
+            cy={y}
+            r={6}
+            fill="#a78bfa"
+            stroke="#fff"
+            strokeWidth={2}
+          />
         ))}
-      </div>
-
-      <div className="flex justify-between text-xs text-muted-foreground">
-        <span>0</span>
-        <span>{Math.round(maxViews / 1000)}K</span>
-      </div>
+        {/* Nhãn ngày */}
+        {points.map(([x], i) => (
+          <text
+            key={i}
+            x={x}
+            y={height - padding + 24}
+            textAnchor="middle"
+            fontSize={14}
+            fill="#6b7280"
+          >
+            {chartData[i].day}
+          </text>
+        ))}
+        {/* Nhãn số lượng lớn nhất */}
+        <text
+          x={padding - 10}
+          y={padding + 4}
+          textAnchor="end"
+          fontSize={14}
+          fill="#6b7280"
+        >
+          {maxViews}
+        </text>
+        {/* Nhãn số lượng nhỏ nhất */}
+        <text
+          x={padding - 10}
+          y={height - padding + 4}
+          textAnchor="end"
+          fontSize={14}
+          fill="#6b7280"
+        >
+          {minViews}
+        </text>
+      </svg>
     </div>
-  )
+  );
 }
