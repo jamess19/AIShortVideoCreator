@@ -35,6 +35,7 @@ import { Video } from "@/lib/models";
 import { useFetchList } from "@/hooks/use-fetch-list";
 import { useQuery } from "@/hooks/use-query";
 import { useRouter } from "next/navigation";
+import DownloadVideo from "@/app/video/[videoId]/edit/_components/DownloadVideo";
 
 const mockVideos : Video[] = [
   {
@@ -433,6 +434,7 @@ export default function MyVideosPage() {
                     <Share2 size={14} />
                     <span>Chia sẻ</span>
                   </button>
+                  <DownloadVideo videoData={video} />
                 </div>
               )}
             </div>
