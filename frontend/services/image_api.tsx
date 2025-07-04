@@ -8,6 +8,20 @@ const api = axios.create({
     timeout: 50000
 });
 
+api.interceptors.request.use(
+    (config) => {
+        const accessToken = localStorage.getItem("accessToken");
+        if (accessToken) {
+            const cleanToken = accessToken.replace(/"/g, '');
+            config.headers.Authorization = `Bearer ${cleanToken}`;
+        }
+        return config;
+    },
+    (error) => {
+        return Promise.reject(error);
+    }
+);
+
 export const GenerateImageApi = async (request: GenerateImageRequest) => {
     try {
         const response = await api.post("/image/generate", request);

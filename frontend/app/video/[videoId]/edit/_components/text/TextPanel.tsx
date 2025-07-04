@@ -36,9 +36,9 @@ function TextPanel()
   }
   return (
     <div>
-        <h2> insert your text </h2>
+        <Label className='text-lg font-bold'>Thêm văn bản</Label>
         <Textarea className=' mt-1 bg-white' 
-        placeholder='type something...'
+        placeholder='Nhập nội dung văn bản...'
         value={text}
         onChange={(e) => setText(e.target.value)}/>
 

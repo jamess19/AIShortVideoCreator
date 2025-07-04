@@ -19,7 +19,7 @@ function EditTabBar({ isOpen, setIsOpen }:EditTabBarProps) {
           isOpen ? 'w-[100%]' : 'w-[15%]'} overflow-hidden`}>
         <div className="flex items-center justify-end h-12 px-2 bg-gray-100">
           {isOpen && (
-            <div className='m-auto font-bold text-xl'> Edit Properties </div>
+            <div className='m-auto font-bold text-xl'> Thêm sticker hoặc văn bản  </div>
           )}
           <Button
             variant="ghost"
@@ -33,9 +33,9 @@ function EditTabBar({ isOpen, setIsOpen }:EditTabBarProps) {
 
         
         {isOpen && (<div className="w-full h-full">
-        <Tabs defaultValue="music" className="flex flex-col h-full justify-between">
-          <TabsList className="grid grid-cols-3">
-            <TabsTrigger
+        <Tabs defaultValue="text" className="flex flex-col h-full justify-between">
+          <TabsList className="grid grid-cols-2">
+            {/* <TabsTrigger
               value="music"
               className="rounded-sm m-2 border-1 hover:bg-gray-200 data-[state=active]:bg-purple-600 data-[state=active]:text-white "
             >
@@ -45,7 +45,7 @@ function EditTabBar({ isOpen, setIsOpen }:EditTabBarProps) {
                   Music
                 </span>
               </div>
-            </TabsTrigger>
+            </TabsTrigger> */}
 
             <TabsTrigger value="text" 
             className="rounded-sm m-2 border-1 hover:bg-gray-200 data-[state=active]:bg-purple-600 data-[state=active]:text-white">
@@ -68,11 +68,11 @@ function EditTabBar({ isOpen, setIsOpen }:EditTabBarProps) {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent
+          {/* <TabsContent
             value="music"
             className="overflow-auto flex-grow my-2">
             <MusicPanel />
-          </TabsContent>
+          </TabsContent> */}
           <TabsContent value="text" className="p-4 overflow-auto flex-grow">
             <TextPanel/>
           </TabsContent>
