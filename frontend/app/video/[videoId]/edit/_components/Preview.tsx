@@ -51,6 +51,7 @@ function Preview() {
             y: text_attachment.position.y / 100,
           },
           font_size: text_attachment.style.fontSize,
+          font_family: text_attachment.style.fontFamily,
           color_hex: text_attachment.style.color,
         })),
         emoji_attachments: attachments.emojis.map((emoji_attachment) => ({
