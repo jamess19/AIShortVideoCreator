@@ -29,9 +29,12 @@ import { VideoPlayer } from "@/components/video-player";
 import { VideoThumbnail } from "@/components/video-thumbnail";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { GetVideosApi,uploadVideoToYoutubeApi } from "@/services/video_api";
+import {uploadVideoToYoutubeApi } from "@/services/video_api";
 import { getYoutubeAuthUrlApi, getYoutubeAccessToken } from "@/services/user_api";
 import { Video } from "@/lib/models";
+import { useFetchList } from "@/hooks/use-fetch-list";
+import { useQuery } from "@/hooks/use-query";
+import { useRouter } from "next/navigation";
 
 const mockVideos : Video[] = [
   {
@@ -108,12 +111,19 @@ interface UploadVideoField {
   category: string;
   privateStatus: string;
 }
-
+const initialQuery = {
+  current_page_number: 1,
+  page_size: 10,
+}
 export default function MyVideosPage() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState("all");
   const [hoveredVideo, setHoveredVideo] = useState<string | null>(null);
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
-  const [videos, setVideos] = useState<Video[]>([]);
+  const [titleKeyword, setTitleKeyword] = useState("");
+  const [query, updateQuery, resetQuery] = useQuery(initialQuery);
+  const { data: videos, totalPages} = useFetchList("video", query);
+
   const [uploadVideoField, setUploadVideoField] = useState<UploadVideoField>({
     title: "",
     description: "",
@@ -128,17 +138,6 @@ export default function MyVideosPage() {
   const [uploadResult, setUploadResult] = useState<string>("");
 
   const redirect_uri = "http://localhost:3000/my-videos"
-  const filteredVideos = videos.filter((video) => {
-    if (activeTab === "all") return true;
-    if (activeTab === "published") return video.status === "published";
-    if (activeTab === "draft") return video.status === "draft";
-    return true;
-  });
-  const publishedCount = videos.filter(
-    (video) => video.status === "published"
-  ).length;
-  const draftCount = videos.filter((video) => video.status === "draft").length;
-  const totalCount = videos.length;
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -175,21 +174,7 @@ export default function MyVideosPage() {
       // }
     }
   }, []);
-  useEffect(() => {
-    const fetchVideos = async () => {
-      try {
-        const response = await GetVideosApi();
-        if (response) {
-          setVideos(response.videos_data);
-        }
-      } catch (error) {
-        console.error("Error fetching videos:", error);
-        setVideos(mockVideos); 
-      }
-    };
 
-    fetchVideos();
-  }, []);
   useEffect(() => {
     if(selectedVideo) {
       setUploadVideoField({
@@ -208,14 +193,6 @@ export default function MyVideosPage() {
     return `${minutes.toString().padStart(2, "0")}:${remainingSeconds
       .toString()
       .padStart(2, "0")}`;
-  };
-
-  const handleDurationLoad = (videoId: string, duration: number) => {
-    setVideos((prevVideos) =>
-      prevVideos.map((video) =>
-        video.public_id === videoId ? { ...video, duration } : video
-      )
-    );
   };
 
   const handleVideoClick = (video: Video) => {
@@ -298,6 +275,34 @@ export default function MyVideosPage() {
       }, 3000);
     }
   };
+  const HandleLoadMoreVideos = () => {
+    if (query.current_page_number < totalPages) {
+      updateQuery({ current_page_number: query.current_page_number + 1 });
+    }
+  }
+  const handleChangeStatusTab = (status: string) => {
+    setActiveTab(status);
+
+    if (status === "all") {
+      resetQuery();
+    } else {
+      updateQuery({ current_page_number: 1, page_size: 10, status: status });
+    }
+
+    setSelectedVideo(null);
+  }
+  const NavigateToEditVideoPage = (videoId: string) => {
+    router.push(`/video/${videoId}/edit`);
+  };
+  const handleSearchVideoWithKeyword = () => {
+    if (titleKeyword.trim() !== "") {
+      updateQuery({ title: titleKeyword, current_page_number: 1 });
+      setActiveTab("all");
+    } else {
+      resetQuery();
+      setActiveTab("all");
+    }
+  };
   return (
     <div className="p-8 ml-64">
       <div className="flex justify-between items-center mb-4">
@@ -324,12 +329,16 @@ export default function MyVideosPage() {
           />
           <input
             type="text"
-            placeholder="Tìm kiếm video..."
+            value={titleKeyword}
+            onChange={(e) => setTitleKeyword(e.target.value)}
+            placeholder="Tìm kiếm video theo tiêu đề..."
             className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 placeholder-gray-400 text-gray-800"
           />
         </div>
-        <button className="border border-gray-200 p-2 rounded-md hover:bg-gray-50">
-          <Filter size={20} className="text-gray-600" />
+        <button 
+          onClick={handleSearchVideoWithKeyword}
+          className="border border-gray-200 p-2 rounded-md hover:bg-gray-50 cursor-pointer">
+          <Search className="text-gray-600"/>
           <span className="sr-only">Lọc</span>
         </button>
       </div>
@@ -341,34 +350,34 @@ export default function MyVideosPage() {
               ? "border-b-2 border-purple-600 text-purple-600 font-medium"
               : "text-gray-600"
           }`}
-          onClick={() => setActiveTab("all")}
+          onClick={() => handleChangeStatusTab("all")}
         >
-          Tất cả ({totalCount})
+          Tất cả
         </button>
         <button
           className={`px-4 py-2 ${
-            activeTab === "published"
+            activeTab === "done"
               ? "border-b-2 border-purple-600 text-purple-600 font-medium"
               : "text-gray-600"
           }`}
-          onClick={() => setActiveTab("published")}
+          onClick={() => handleChangeStatusTab("done")}
         >
-          Đã đăng ({publishedCount})
+          Đã edit
         </button>
         <button
           className={`px-4 py-2 ${
-            activeTab === "draft"
+            activeTab === "processing"
               ? "border-b-2 border-purple-600 text-purple-600 font-medium"
               : "text-gray-600"
           }`}
-          onClick={() => setActiveTab("draft")}
+          onClick={() => handleChangeStatusTab("processing")}
         >
-          Bản nháp ({draftCount})
+          Chưa edit
         </button>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-        {filteredVideos.map((video) => (
+        {videos.map((video) => (
           <div
             key={video.public_id}
             className="bg-gray-100 rounded-md overflow-hidden cursor-pointer"
@@ -376,27 +385,24 @@ export default function MyVideosPage() {
             onMouseLeave={() => setHoveredVideo(null)}
             onClick={() => handleVideoClick(video)}
           >
-            <div className="relative aspect-[2/3] bg-gray-700 flex items-center justify-center">
+            <div className="relative aspect-[16/9] bg-gray-700 flex items-center justify-center">
               {/* Video Thumbnail từ frame đầu tiên */}
               <VideoThumbnail
                 videoUrl={video.video_url}
                 alt={video.title}
                 className="w-full h-full object-cover"
-                onDurationLoad={(duration) =>
-                  handleDurationLoad(video.public_id, duration)
-                }
               />
 
               {/* Status badge */}
               <div className="absolute top-2 left-2">
                 <span
                   className={`text-xs px-2 py-1 rounded-md ${
-                    video.status === "published"
+                    video.status === "done"
                       ? "bg-green-500 text-white"
                       : "bg-yellow-500 text-white"
                   }`}
                 >
-                  {video.status === "published" ? "Đã đăng" : "Bản nháp"}
+                  {video.status === "done" ? "Đã edit" : "Chưa edit"}
                 </span>
               </div>
 
@@ -406,11 +412,18 @@ export default function MyVideosPage() {
 
               {hoveredVideo === video.public_id && (
                 <div className="absolute inset-0 bg-gray-400 bg-opacity-40 flex flex-col items-center justify-center gap-2">
-                  <button className="bg-white text-gray-800 px-3 py-1.5 rounded-md flex items-center gap-1 text-sm w-28 justify-center">
+                  {video.status !== "done" && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      NavigateToEditVideoPage(video.public_id);
+                    }}
+                    className="bg-white cursor-pointer text-gray-800 px-3 py-1.5 rounded-md flex items-center gap-1 text-sm w-28 justify-center">
                     <Edit size={14} />
                     <span>Sửa</span>
                   </button>
-                  <button className="bg-white text-gray-800 px-3 py-1.5 rounded-md flex items-center gap-1 text-sm w-28 justify-center"
+                  )}
+                  <button className="bg-white cursor-pointer text-gray-800 px-3 py-1.5 rounded-md flex items-center gap-1 text-sm w-28 justify-center"
                     onClick={(e) => {
                       e.stopPropagation();
                       setSelectedVideo(video);
@@ -461,7 +474,23 @@ export default function MyVideosPage() {
             </div>
           </div>
         ))}
+        <div className="col-span-1 sm:col-span-2 md:col-span-3 lg:col-span-4 text-center text-gray-500">
+          {videos.length === 0 && (
+            <p className="text-sm">Không có video nào để hiển thị.</p>
+          )}
+        </div>
       </div>
+      
+      {query.current_page_number < totalPages && (
+        <div className="flex justify-center mt-6">
+          <Button
+            onClick={HandleLoadMoreVideos}
+            className="mt-6 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md flex items-center gap-2">
+            <span>Tải thêm video</span>
+          </Button>
+        </div>
+      )}
+
 
       {/* Video Player Dialog */}
       <Dialog

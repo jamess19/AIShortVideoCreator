@@ -1,10 +1,12 @@
 import axios from "axios";
 
-const BASE_URL = "http://localhost:8000/api/v1";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL + "/api/v2";
+const BASE_URL =  "http://localhost:8000/api/v1"; // Fallback base URL for local development
 const api = axios.create({
-    baseURL: BASE_URL,
-    //timeout: 50000,
+    baseURL: API_BASE_URL || BASE_URL,
+    timeout: 100000
 });
+
 api.interceptors.request.use(
     (config) => {
         const accessToken = localStorage.getItem("accessToken");
@@ -59,9 +61,10 @@ export const GetVideoByIdApi = async (videoId: string) => {
         throw error;
     }
 }
-export const GetVideosApi = async()  => {
+export const GetVideosApi = async(request: any)  => {
     try {
-        const response = await api.get("/video");
+        const url = `/video?${new URLSearchParams(request).toString()}`;
+        const response = await api.get(url);
         return response.data; 
     } catch (error) {
         console.error("Error fetching videos:", error);

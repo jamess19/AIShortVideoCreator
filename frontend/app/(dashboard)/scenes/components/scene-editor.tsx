@@ -12,7 +12,7 @@ import { MusicSelector } from "./music-selector"
 import { Scene } from "@/lib/models"
 
 interface SceneEditorProps {
-  scene: Scene
+  scene: any
   onUpdate: (updatedScene: any) => void
   handleBackgroundChangeForParent: (content?: File, publicId?: string, url?: string) => void
   handleMusicChangeForParent: (content?: File, publicId?: string, url?: string) => void
@@ -85,7 +85,8 @@ export function SceneEditor({ scene, onUpdate,
           </TabsContent>
 
           <TabsContent value="background">
-            <BackgroundSelector 
+            <BackgroundSelector
+              bgImageDescriptionOfScene={scene.background_image_description}
               currentBackgroundUrl={currentBackgroundUrl}
               currentBackgroundPublicId={currentBackgroundPublicId}
               onBackgroundChange={(content?: File, publicId?: string,url?: string) => handleBackgroundChangeForParent(content, publicId,url)} />

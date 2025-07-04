@@ -24,7 +24,7 @@ function EmojiPanel() {
 
   return (
     <div>
-    <ScrollArea className="h-[200px] w-[350px] rounded-md border p-4 bg-white">
+    <ScrollArea className="rounded-md border p-4 bg-white w-full h-[400px]">
         <div className='grid grid-cols-3 md:grid-cols-5 gap-3'>
             {emojiList.map((emoji, index) => (
                 <img key={index} 
