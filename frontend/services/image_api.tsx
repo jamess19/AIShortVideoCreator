@@ -1,9 +1,10 @@
 import axios from "axios";
 
 
-const BASE_URL = "http://localhost:8000/api/v1";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL + "/api/v1";
+const BASE_URL =  "http://localhost:8000/api/v1";
 const api = axios.create({
-    baseURL: BASE_URL,
+    baseURL: API_BASE_URL || BASE_URL,
     timeout: 50000
 });
 
@@ -19,6 +20,6 @@ export const GenerateImageApi = async (request: GenerateImageRequest) => {
 
 export interface GenerateImageRequest {
     content: string;
-    width: number;
-    height: number;
+    style?: string;
+    image_ratio?: string;
 }
