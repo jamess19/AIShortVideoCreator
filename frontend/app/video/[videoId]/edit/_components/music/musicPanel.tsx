@@ -6,6 +6,7 @@ import axios from 'axios'
 import MusicTrack from './musicTrack';
 import { useVideoContext } from '@/hooks/use-video-context';
 import { v4 as uuidv4 } from "uuid"
+import { GetMusicTracksApi } from '@/services/music_api';
 
 interface MusicTrack {
     id: string;
@@ -26,9 +27,10 @@ export default function MusicPanel() {
     useEffect(() => {
       const fetchMusicTrack = async () => {
         try {
-          const response = await axios.get("http://localhost:8000/api/v1/music_track/") 
-          console.log('Response Data:', response.data); 
-          setTracks(response.data)
+          const response = await GetMusicTracksApi();
+          if(response){
+            setTracks(response);
+          } 
         }
         catch (err) {
           setError(`Unexpected error: ${err}`);

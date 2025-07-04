@@ -11,8 +11,8 @@ export function AppSidebar() {
     {
       icon: Home,
       label: "Trang chủ",
-      href: "/",
-      active: pathname === "/",
+      href: "/statistic",
+      active: pathname === "/statistic",
     },
     {
       icon: FileText,
