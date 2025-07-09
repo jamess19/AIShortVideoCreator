@@ -43,7 +43,7 @@ export const getYoutubeAccessToken = async (code: string, redirect_uri: string) 
 }
 export const RegisterApi = async (signUpRequest) => {
     try {
-        const response = await api.post("/user", signUpRequest);
+        const response = await api.post("/user/signup", signUpRequest);
         return response.data;
     } catch (error) {
         console.error("Error registering:", error);

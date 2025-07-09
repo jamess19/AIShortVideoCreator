@@ -69,6 +69,7 @@ export default function AnalyticsDashboard() {
     time_range: "last_7_days",
     start_date: undefined,
     end_date: undefined,
+    user_id: sessionStorage.getItem("username") || "",
   });
   const [currentVideo, setCurrentVideo] = useState<TopVideo[]>([])
 
@@ -76,12 +77,14 @@ export default function AnalyticsDashboard() {
       const fetchTotalStats = async () => {
         try {
         const [totalStatsRes, timelyStatsRes, currentVideosRes ] = await Promise.all([
-          getAllVideosStats(),
+          getAllVideosStats({
+            user_id : sessionStorage.getItem("username") || "",
+          }),
           getTimelyCountStats(videoCountRequest),
           GetVideosApi({
             page_size: 5,
             current_page_number: 1,
-            user_id: '',
+            user_id: sessionStorage.getItem("username") || "",
             status: '',
             title: '',
           })

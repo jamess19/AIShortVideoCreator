@@ -5,12 +5,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Slider } from "@/components/ui/slider"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Clock, Play, Pause, Volume2, ArrowRight, TrendingUp, Sparkles, RefreshCw } from "lucide-react"
 import TrendingSearch from "./components/trending-search"
 import { useRouter } from "next/navigation"
 import type { Voice } from "@/lib/models"
 import { GetVoicesApi } from "@/services/video_script_api"
 import { AutoGenerateScriptApi } from "@/services/video_script_api"
+import { AutoGenerateScriptApiV2 } from "@/services/video_script_api_v2"
 
 export default function ScriptPage() {
   const router = useRouter()
@@ -20,7 +22,8 @@ export default function ScriptPage() {
   const [selectedContent, setSelectedContent] = useState<any>(null)
   const [selectedScript, setSelectedScript] = useState<string>("")
   const [scriptContent, setScriptContent] = useState<string>("") // Nội dung textarea
-  const [sceneCount, setSceneCount] = useState(3);
+  const [sceneCount, setSceneCount] = useState<number | undefined>(undefined);
+  const [selectedAIModel, setSelectedAIModel] = useState<string>("default")
   const [voices, setVoices] = useState<Voice[]>([])
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null)
   const [isGeneratingScript, setIsGeneratingScript] = useState(false)
@@ -73,11 +76,12 @@ export default function ScriptPage() {
     const request = {
       content: selectedContent.title,
       video_duration: scriptDuration,
-      scene_quantity: sceneCount
+      scene_quantity: sceneCount ? sceneCount : -1,
+      model: selectedAIModel === "default" ? "gemini" : selectedAIModel
     }
 
     try {
-      const response = await AutoGenerateScriptApi(request)
+      const response = await AutoGenerateScriptApiV2(request)
 
       if (response && response.message === "success") {
         // Cập nhật trực tiếp vào textarea
@@ -92,9 +96,9 @@ export default function ScriptPage() {
 
   const HandleNextStep = () => {
     if (selectedScript) {
-      localStorage.setItem("selectedScript", selectedScript)
-      localStorage.setItem("selectedVoiceId", selectedVoiceId)
-      localStorage.setItem("selectedContent", JSON.stringify(selectedContent))
+      sessionStorage.setItem("selectedScript", selectedScript)
+      sessionStorage.setItem("selectedVoiceId", selectedVoiceId)
+      sessionStorage.setItem("selectedContent", JSON.stringify(selectedContent))
       router.push("/scenes")
     } else {
       console.warn("No script selected")
@@ -164,24 +168,41 @@ export default function ScriptPage() {
                         <p className="text-sm text-gray-600">Tạo kịch bản tự động dựa trên nội dung đã chọn</p>
                       </div>
                     </div>
-                    <Button
-                      onClick={generateScriptSuggestion}
-                      disabled={isGeneratingScript || !selectedContent}
-                      size="sm"
-                      className="bg-purple-600 hover:bg-purple-700 shadow-lg hover:shadow-xl transition-all duration-200 px-4 py-2"
-                    >
-                      {isGeneratingScript ? (
-                        <>
-                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                          Đang tạo...
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles className="h-4 w-4 mr-2" />
-                          Tạo gợi ý
-                        </>
-                      )}
-                    </Button>
+                    
+                    <div className="flex items-center gap-3">
+                      <div className="flex flex-col gap-1">
+                        <Select
+                          value={selectedAIModel} onValueChange={setSelectedAIModel}>
+                          <SelectTrigger className="w-auto h-8 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-white">
+                            <SelectItem value="default">Chọn model AI</SelectItem>
+                            <SelectItem value="gemini">Gemini</SelectItem>
+                            <SelectItem value="huggingface">Hugging Face</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <Button
+                        onClick={generateScriptSuggestion}
+                        disabled={isGeneratingScript || !selectedContent}
+                        size="sm"
+                        className="bg-purple-600 hover:bg-purple-700 shadow-lg hover:shadow-xl transition-all duration-200 px-4 py-2"
+                      >
+                        {isGeneratingScript ? (
+                          <>
+                            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                            Đang tạo...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="h-4 w-4 mr-2" />
+                            Tạo gợi ý
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   </div>
 
                   {/* Selected content info */}
@@ -243,6 +264,15 @@ export default function ScriptPage() {
                           />
                         </svg>
                         Số cảnh
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 px-2 text-xs text-purple-600 hover:bg-purple-50"
+                          onClick={() => setSceneCount(sceneCount === undefined ? 3 : undefined)}
+                        >
+                          {sceneCount === undefined ? "Chọn thủ công" : "Tự động"}
+                        </Button>
                       </label>
                       <div className="bg-white/70 backdrop-blur-sm rounded-lg p-3 border border-purple-100">
                         <div className="flex items-center gap-3">
@@ -252,8 +282,8 @@ export default function ScriptPage() {
                               variant="outline"
                               size="sm"
                               className="h-8 w-8 p-0 border-purple-200 hover:bg-purple-50 bg-white"
-                              onClick={() => setSceneCount(Math.max(1, sceneCount - 1))}
-                              disabled={sceneCount <= 1}
+                              onClick={() => setSceneCount(sceneCount ? Math.max(1, sceneCount - 1) : 1)}
+                              disabled={sceneCount === 1}
                             >
                               -
                             </Button>
@@ -261,8 +291,16 @@ export default function ScriptPage() {
                               type="number"
                               min={1}
                               max={10}
-                              value={sceneCount}
-                              onChange={(e) => setSceneCount(Math.max(1, Math.min(10, Number(e.target.value))))}
+                              value={sceneCount || ""}
+                              placeholder="Auto"
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                if (value === "") {
+                                  setSceneCount(undefined);
+                                } else {
+                                  setSceneCount(Math.max(1, Math.min(10, Number(value))));
+                                }
+                              }}
                               className="w-16 h-8 border border-purple-200 rounded text-center text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                             />
                             <Button
@@ -270,14 +308,14 @@ export default function ScriptPage() {
                               variant="outline"
                               size="sm"
                               className="h-8 w-8 p-0 border-purple-200 hover:bg-purple-50 bg-white"
-                              onClick={() => setSceneCount(Math.min(10, sceneCount + 1))}
-                              disabled={sceneCount >= 10}
+                              onClick={() => setSceneCount(sceneCount ? Math.min(10, sceneCount + 1) : 1)}
+                              disabled={sceneCount === 10}
                             >
                               +
                             </Button>
                           </div>
                           <div className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm font-medium">
-                            {sceneCount} cảnh
+                            {sceneCount ? `${sceneCount} cảnh` : "Tự động"}
                           </div>
                         </div>
                       </div>
@@ -307,7 +345,9 @@ export default function ScriptPage() {
                         <p className="text-sm text-gray-600">
                           Dựa trên nội dung {selectedContent?.title}, AI sẽ tạo kịch bản phù hợp với
                           <span className="font-medium text-purple-700"> {scriptDuration} giây</span> và
-                          <span className="font-medium text-purple-700"> {sceneCount} cảnh</span>.
+                          <span className="font-medium text-purple-700"> 
+                            {sceneCount ? ` ${sceneCount} cảnh` : " số cảnh sẽ được tự động xác định"}
+                          </span>.
                         </p>
                       </div>
                     </div>

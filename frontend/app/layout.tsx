@@ -18,7 +18,6 @@ export default function RootLayout({
   return (
     <html lang="vi" suppressHydrationWarning>
       <body className={inter.className}>
-        <Toaster />
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
@@ -26,6 +25,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           {children}
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>

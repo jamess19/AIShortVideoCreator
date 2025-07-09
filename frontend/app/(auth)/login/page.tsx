@@ -7,6 +7,7 @@ import { Video, Circle } from "lucide-react";
 import { useState } from "react";
 import { LogInApi } from "@/services/user_api";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -23,22 +24,23 @@ export default function LoginPage() {
       const response = await LogInApi(loginRequest);
 
       if(response) {
-        if(response.status === "success") {
-          localStorage.setItem("accessToken", response.access_token);
-          localStorage.setItem("username", response.username);
-          console.log("Login successful", response.message);
+        if(response.status_code === 200) {
+          sessionStorage.setItem("accessToken", response.access_token);
+          sessionStorage.setItem("username", response.username);
+
+          toast.success("Đăng nhập thành công!"); 
           router.push("/statistic");
         }
         else{
-          console.log("Login failed: ", response.message);
+          toast.error(response.message || "Đăng nhập thất bại, vui lòng thử lại.");
         }
       }
       else {
-        console.log("Login failed");
+        toast.error(response.message || "Đăng nhập thất bại, vui lòng thử lại.");
       }
     }
     catch (error) {
-      console.error("Error during login:", error);
+      toast.error("Đã xảy ra lỗi khi đăng nhập. Vui lòng thử lại sau.");
     }
     finally {
       setIsLoggingIn(false);

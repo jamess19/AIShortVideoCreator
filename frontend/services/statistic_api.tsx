@@ -10,7 +10,7 @@ const api = axios.create({
 
 api.interceptors.request.use(
     (config) => {
-        const accessToken = localStorage.getItem("accessToken");
+        const accessToken = sessionStorage.getItem("accessToken");
         if (accessToken) {
             const cleanToken = accessToken.replace(/"/g, '');
             config.headers.Authorization = `Bearer ${cleanToken}`;
@@ -21,9 +21,9 @@ api.interceptors.request.use(
         return Promise.reject(error);
     }
 );
-export const getAllVideosStats = async () => {
+export const getAllVideosStats = async (query: any) => {
     try {
-        const response = await api.get("/video/statistics");
+        const response = await api.get(`/video/statistics?${new URLSearchParams(query)}`);
         console.log('thống kê', response.data)
         return response.data;
     } catch (error) {

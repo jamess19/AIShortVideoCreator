@@ -18,6 +18,7 @@ export interface VideoCountRequest {
     time_range: string,
     start_date: Date | undefined,
     end_date: Date | undefined,
+    user_id: string | "",
 }
 // interface for top videos
 export interface TopVideo {
