@@ -5,7 +5,7 @@ const BASE_URL =  "http://localhost:8000/api/v1"; // Fallback base URL for local
 
 const api = axios.create({
     baseURL: API_BASE_URL || BASE_URL,
-    timeout: 100000
+    timeout: 180000
 });
 
 api.interceptors.request.use(

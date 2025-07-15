@@ -11,6 +11,7 @@ import DownloadVideo from './DownloadVideo';
 import Timeline from './Timeline';
 import { EditVideoApi } from '@/services/video_api';
 import { text } from 'stream/consumers';
+import { toast } from "sonner";
 
 function Preview() {
   const router = useRouter();
@@ -70,6 +71,7 @@ function Preview() {
 
       const response = await EditVideoApi(request);
       if(response.secure_url !== ""){
+        toast.success("Video saved successfully!");
         setIsSaved(true);
         setTimeout(() => {
           setIsSaved(false);

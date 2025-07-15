@@ -39,7 +39,7 @@ const FILTER_OPTIONS = {
   day: [
     { value: "last_7_days", label: "7 ngày qua" },
     { value: "last_30_days", label: "30 ngày qua" },
-    { value: "custom", label: "Tùy chọn" },
+    //{ value: "custom", label: "Tùy chọn" },
   ],
   month: [
     { value: "last_3_months", label: "3 tháng qua" },
@@ -128,7 +128,7 @@ export default function AnalyticsDashboard() {
       }
     }
     fetchTotalStats()
-    }, [])
+    }, [videoCountRequest])
 
 const handleViewClick = async () => {
   // try {
@@ -245,12 +245,12 @@ const handleViewClick = async () => {
                 <div className="flex flex-col justify-center">
                 <div>
                   <CardTitle>Xu Hướng Hiệu Suất</CardTitle>
-                  <CardDescription>Thống kê likes, views và comments theo thời gian</CardDescription>
+                  <CardDescription>Thống kê số lượng video theo thời gian</CardDescription>
                 </div>
 
                 <div className="flex gap-2 mt-4">
                 {/* Chọn time_unit muốn xem (day, month, year)*/}
-                <Select
+                {/* <Select
                     value={videoCountRequest.time_unit}
                     onValueChange={(value) => setvideoCountRequest(prev => ({ ...prev, time_unit: value }))}>
                     <SelectTrigger className="w-35 bg-white">
@@ -261,7 +261,8 @@ const handleViewClick = async () => {
                       <SelectItem value="month">Theo tháng</SelectItem>
                       <SelectItem value="year">Theo năm</SelectItem>
                     </SelectContent>
-                </Select>
+                </Select> */}
+
                 {/* Hiển thị time_range option tuơng ứng */}
                 {videoCountRequest.time_unit && (
                 <div className="flex gap-2">
@@ -389,14 +390,14 @@ const handleViewClick = async () => {
                   Xem tất cả video
                 </Button>
               </Link>
-              <Link href="/my-videos">
+              {/* <Link href="/my-videos">
                 <Button variant='outline' 
                   className="w-full h-14 border-1 border-gray-300 justify-start gap-4 text-left 
                   hover:bg-blue-50 hover:border-blue-200 transition-colors bg-transparent">
                   <Upload className="h-5 w-5 text-purple-600" />
                   Đăng video lên nền tảng
                 </Button>
-              </Link>
+              </Link> */}
             </div>
           </CardContent>
           </Card>
