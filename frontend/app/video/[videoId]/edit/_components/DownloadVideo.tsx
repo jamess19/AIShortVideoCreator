@@ -1,9 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useVideoContext } from "@/hooks/use-video-context"
 import { Download, Check, Loader2 } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import { Video } from "@/lib/models"
 import { toast } from "sonner"
 

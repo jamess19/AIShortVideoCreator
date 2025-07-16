@@ -1,11 +1,12 @@
 import axios from "axios";
+import { Voice } from "@/lib/models";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL + "/api/v1"
-const BASE_URL =  "http://localhost:8000/api/v1";
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL + "/api/v2"
+const BASE_URL =  "http://localhost:8000/api/v2";
 const api = axios.create({
     baseURL: API_BASE_URL || BASE_URL,
-    timeout: 50000
+    timeout: 100000
 });
 
 api.interceptors.request.use(
@@ -21,24 +22,22 @@ api.interceptors.request.use(
         return Promise.reject(error);
     }
 );
-export const getAllVideosStats = async (query: any) => {
+export const AutoGenerateScriptApiV2 = async (request) => {
     try {
-        const response = await api.get(`/video/statistics?${new URLSearchParams(query)}`);
-        console.log('thống kê', response.data)
+        const response = await api.post("/video_script", request);
         return response.data;
     } catch (error) {
-        console.error("Error geting statistic:", error);
+        console.error("Error generating script:", error);
         throw error;
     }
 }
-
-export const getTimelyCountStats = async (request: any) => {
+export const GetVideoScriptMetadataApiV2 = async (request) => {
     try {
-        const response = await api.get("/video/statistics/video_count", {params: request});
-        console.log('')
+        console.log(`Request to get video metadata with model ${request.model}`);
+        const response = await api.post("/video_script/video_metadata", request);
         return response.data;
     } catch (error) {
-        console.error("Error geting statistic:", error);
+        console.error("Error getting video metadata:", error);
         throw error;
     }
 }

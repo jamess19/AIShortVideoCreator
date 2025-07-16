@@ -112,17 +112,18 @@ interface UploadVideoField {
   category: string;
   privateStatus: string;
 }
-const initialQuery = {
-  current_page_number: 1,
-  page_size: 10,
-}
+
 export default function MyVideosPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("all");
   const [hoveredVideo, setHoveredVideo] = useState<string | null>(null);
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
   const [titleKeyword, setTitleKeyword] = useState("");
-  const [query, updateQuery, resetQuery] = useQuery(initialQuery);
+  const [query, updateQuery, resetQuery] = useQuery({
+    current_page_number: 1,
+    page_size: 10,
+    user_id: sessionStorage.getItem("username") || "",
+  });
   const { data: videos, totalPages} = useFetchList("video", query);
 
   const [uploadVideoField, setUploadVideoField] = useState<UploadVideoField>({
@@ -159,20 +160,7 @@ export default function MyVideosPage() {
           console.log(error)
         });
       }
-      // if(platform === "facebook"){
-      //   getFacebookAccessToken(code, redirect_uri)
-      //   .then((token) => {
-      //     if (token) {
-      //       sessionStorage.setItem("facebookToken", token);
-      //       console.log(token);
-      //       window.location.replace("/my-videos");
-      //     }
-      //   })
-      //   .catch((error) => {
-      //     window.location.replace("/my-videos");
-      //     console.log(error)
-      //   });
-      // }
+
     }
   }, []);
 
@@ -211,12 +199,6 @@ export default function MyVideosPage() {
         window.location.href = response.auth_url;
       }
     }
-    // else if (platform === "facebook" && sessionStorage.getItem("facebookToken") === null ) {
-    //   const response = await getFacebookthUrlApi(redirect_uri)
-    //   if(response) {
-    //   window.location.href = response;
-    //   }
-    // }
     setDialog("videoInfor")
   }
 

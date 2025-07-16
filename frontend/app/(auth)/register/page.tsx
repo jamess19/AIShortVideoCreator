@@ -7,7 +7,7 @@ import { Video } from "lucide-react";
 import { RegisterApi } from "@/services/user_api";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-
+import { toast } from "sonner";
 export default function RegisterPage() {
   const router = useRouter();
   
@@ -16,23 +16,36 @@ export default function RegisterPage() {
     password: "",
     confirmPassword: "",
   });
+  const [isRegistering, setIsRegistering] = useState(false);
 
   const HandleRegister = async () => {
-    console.log("Registering with", registerRequest);
-
-    const response = await RegisterApi(registerRequest);
-
-    if(response) {
-      if(response.status === "success") {
-        console.log("Register successful", response.message);
-        router.push("/login");
+    try{
+      if (!registerRequest.username || !registerRequest.password || !registerRequest.confirmPassword) {
+        console.log("Vui lòng điền đầy đủ thông tin");
+        return;
       }
-      else{
-        console.log("Register failed: ", response.message);
+      setIsRegistering(true);
+      console.log("Registering with", registerRequest);
+
+      const response = await RegisterApi(registerRequest);
+
+      if(response) {
+        if(response.status === "success") {
+          toast.success("Đăng ký thành công!");
+          router.push("/login");
+        }
+        else{
+          toast.error(response.message || "Đăng ký thất bại, vui lòng thử lại.");
+        }
       }
+      else {
+        toast.error("Đăng ký thất bại, vui lòng thử lại.");
+      }
+    } catch (error) {
+      toast.error("Đã xảy ra lỗi khi đăng ký. Vui lòng thử lại sau.");
     }
-    else {
-      console.log("Register failed");
+    finally {
+      setIsRegistering(false);
     }
   };
   return (
@@ -119,11 +132,20 @@ export default function RegisterPage() {
               className="bg-white border-gray-300 text-black placeholder:text-gray-400 focus:placeholder-transparent"
             />
           </div>
-          <Button
-            onClick={HandleRegister} 
-            className="w-full mt-6 bg-purple-600 hover:bg-purple-700">
-            Đăng ký
-          </Button>
+          {!isRegistering ? (
+            <Button
+              onClick={HandleRegister} 
+              className="w-full mt-6 bg-purple-600 hover:bg-purple-700">
+              Đăng ký
+            </Button>
+          ) : (
+            <Button
+              disabled
+              className="w-full mt-6 bg-purple-600 hover:bg-purple-700">
+              <span className="animate-spin h-5 w-5 mr-2"></span>
+              Đang đăng ký...
+            </Button>
+          )}
           <div className="text-center text-sm mt-4 text-gray-600">
             Đã có tài khoản?{" "}
             <Link href="/login" className="text-purple-600 hover:underline">

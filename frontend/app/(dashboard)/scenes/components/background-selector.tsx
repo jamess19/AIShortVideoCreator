@@ -12,6 +12,8 @@ import { Button } from "@/components/ui/button"
 import { Upload, Sparkles, RefreshCw } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { GenerateImageApi, GenerateImageRequest } from "@/services/image_api"
+import { GenerateImageApiV2 } from "@/services/image_api_v2"
+
 interface BackgroundSelectorProps {
   currentBackgroundUrl?: string
   currentBackgroundPublicId?: string
@@ -36,6 +38,7 @@ export function BackgroundSelector({ currentBackgroundUrl: currentBackgroundUrl,
   const imageInputRef = useRef<HTMLInputElement>(null)
   const [activeTab, setActiveTab] = useState<string>("templates")
   const [selectedStyle, setSelectedStyle] = useState("")
+  const [selectedAIModel, setSelectedAIModel] = useState("default")
   const [isGeneratingAI, setIsGeneratingAI] = useState(false)
 
   const { toast } = useToast()
@@ -91,9 +94,10 @@ export function BackgroundSelector({ currentBackgroundUrl: currentBackgroundUrl,
         content: bgImageDescriptionOfScene,
         style: selectedStyle,
         image_ratio: "16:9",
+        model: selectedAIModel === "default" ? "gemini" : selectedAIModel,
       }
 
-      const response = await GenerateImageApi(request)
+      const response = await GenerateImageApiV2(request)
       if(response && response.status_code === 200){
         onBackgroundChange(undefined, response.public_id, response.image_url)
       }
@@ -217,7 +221,18 @@ export function BackgroundSelector({ currentBackgroundUrl: currentBackgroundUrl,
                     ))}
                   </SelectContent>
                 </Select>
-
+                {/* Chọn model AI */}
+                <Select
+                  value={selectedAIModel} onValueChange={setSelectedAIModel}>
+                  <SelectTrigger className="w-auto h-8 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white">
+                    <SelectItem value="default">Chọn model AI</SelectItem>
+                    <SelectItem value="gemini">Gemini</SelectItem>
+                    <SelectItem value="huggingface">Hugging Face</SelectItem>
+                  </SelectContent>
+                </Select>
                 {/* Button tạo hình */}
                 <Button
                   onClick={generateAIBackground}

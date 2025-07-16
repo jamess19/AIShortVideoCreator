@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, FileText, Video, Plus, Layers } from "lucide-react";
+import { UserProfile } from "./user-profile";
 
 export function AppSidebar() {
   const pathname = usePathname();
@@ -57,6 +58,7 @@ export function AppSidebar() {
           </Link>
         ))}
       </nav>
+      
       <div className="p-4">
         <Link
           href="/script"
@@ -66,6 +68,8 @@ export function AppSidebar() {
           <span>Tạo video mới</span>
         </Link>
       </div>
+
+      <UserProfile />
     </div>
   );
 }

@@ -11,6 +11,7 @@ import DownloadVideo from './DownloadVideo';
 import Timeline from './Timeline';
 import { EditVideoApi } from '@/services/video_api';
 import { text } from 'stream/consumers';
+import { toast } from "sonner";
 
 function Preview() {
   const router = useRouter();
@@ -41,7 +42,7 @@ function Preview() {
     try {
       const request = {
         public_id: videoData.videoId,
-        userId: localStorage.getItem('username') || 'anonymous',
+        userId: sessionStorage.getItem('username') || 'anonymous',
         text_attachments: attachments.texts.map((text_attachment) => ({
           text: text_attachment.content,
           start_time: text_attachment.startTime,
@@ -70,6 +71,7 @@ function Preview() {
 
       const response = await EditVideoApi(request);
       if(response.secure_url !== ""){
+        toast.success("Video saved successfully!");
         setIsSaved(true);
         setTimeout(() => {
           setIsSaved(false);

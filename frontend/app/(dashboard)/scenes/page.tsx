@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft, Save, Layers } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useToast } from "@/hooks/use-toast"
+import { toast } from "sonner"
 import { GetVideoScriptMetadataApi } from "@/services/video_script_api"
 import { CreateVideoApi } from "@/services/video_api"
 import { VideoMetadataJson, Scene} from "@/lib/models"
@@ -58,7 +58,6 @@ export default function ScenesPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
-  const { toast } = useToast()
 
   useEffect(() => {
     const GetVideoScriptMetadata = async (request: any) => {
@@ -67,34 +66,25 @@ export default function ScenesPage() {
         if (response && response.message === "success") {
           console.log("Script metadata fetched successfully:", response)
           setScriptJson(response.data)
-          localStorage.setItem("selectedScript", JSON.stringify(response.data))
+          sessionStorage.setItem("selectedScript", JSON.stringify(response.data))
           if (response.data.scenes && response.data.scenes.length > 0) {
             setActiveSceneId(response.data.scenes[0].scene_id)
           }
         } else {
-          toast({
-            title: "Lỗi",
-            description: "Không thể tải dữ liệu kịch bản",
-            variant: "destructive",
-          })
+          toast.error("Không thể tải dữ liệu kịch bản")
           setScriptJson(null)
         }
       } catch (error) {
         console.error("Error fetching script metadata:", error)
-        toast({
-          title: "Lỗi",
-          description: "Không thể tải dữ liệu kịch bản",
-          variant: "destructive",
-        })
-        setScriptJson(mockScriptJson)
+        toast.error("Đã xảy ra lỗi khi tải dữ liệu kịch bản. Vui lòng thử lại sau.")
       }
       finally {
         setIsLoading(false)
       }
     }
-    const selectedScript = localStorage.getItem("selectedScript")
-    const selectedVoice = localStorage.getItem("selectedVoiceId")
-    const selectedContent = localStorage.getItem("selectedContent")
+    const selectedScript = sessionStorage.getItem("selectedScript")
+    const selectedVoice = sessionStorage.getItem("selectedVoiceId")
+    const selectedContent = sessionStorage.getItem("selectedContent")
     if (selectedVoice) {
       setSelectedVoiceId(selectedVoice)
     }
@@ -112,10 +102,6 @@ export default function ScenesPage() {
       }
       GetVideoScriptMetadata(request)
     } else {
-      setScriptJson(mockScriptJson) // Use mock data if no script is found
-      if(mockScriptJson.scenes && mockScriptJson.scenes.length > 0) {
-        setActiveSceneId(mockScriptJson.scenes[0].scene_id)
-      }
       setIsLoading(false)
     }
   }, [])
@@ -133,7 +119,7 @@ export default function ScenesPage() {
     }
 
     setScriptJson(updatedScript)
-    localStorage.setItem("selectedScript", JSON.stringify(updatedScript))
+    sessionStorage.setItem("selectedScript", JSON.stringify(updatedScript))
   }
   const handleBackgroundChange = (sceneId: number, content?: File, publicId?: string, url?: string) => {
     setBackgroundImages((prev) => {
@@ -154,7 +140,7 @@ export default function ScenesPage() {
       const video_metaData_json : VideoMetadataJson = {
         script : "",
         title: title || "Video không tiêu đề",
-        userId: localStorage.getItem("username") || "anonymous",
+        userId: sessionStorage.getItem("username") || "anonymous",
         voiceId: selectedVoiceId || "vi-VN-HoaiMyNeural",
         videoMetadata:{
           scenes: scriptJson.scenes.map((scene: Scene) => ({
@@ -195,41 +181,25 @@ export default function ScenesPage() {
         request.append("background_musics", music);
       });
 
-      console.log("Saving video with request:");
-      for (const pair of request.entries()) {
-          console.log(pair[0], pair[1]);
-      }
-
       setIsSaving(true)
 
       const response = await CreateVideoApi(request)
       if(response && response.secure_url !== ""){
-        toast({
-          title: "Lưu video thành công",
-          description: "Cấu hình cảnh đã được lưu",
-        })
+        toast.success("Tạo video thành công!")
   
         router.push(`/video/${response.public_id}/edit`);
       }
       else{
-        toast({
-          title: "Lỗi",
-          description: "Không thể lưu cấu hình cảnh. Vui lòng thử lại sau.",
-          variant: "destructive",
-        })
+        toast.error("Không thể tạo video. Vui lòng kiểm tra lại cấu hình cảnh.")
       }
-    } catch (error) {
+    } 
+    catch (error) {
       console.error("Error saving video:", error)
-      setIsSaving(false)
-      toast({
-        title: "Lỗi",
-        description: "Không thể lưu cấu hình cảnh. Vui lòng thử lại sau.",
-        variant: "destructive",
-      })
+      toast.error("Đã xảy ra lỗi khi lưu video. Vui lòng thử lại sau.")
     }
     finally{
       setIsSaving(false)
-      localStorage.removeItem("selectedScript");
+      sessionStorage.removeItem("selectedScript");
     }
   }
 
@@ -251,7 +221,9 @@ export default function ScenesPage() {
           <h2 className="text-2xl font-bold mb-4 text-black">Không tìm thấy dữ liệu kịch bản</h2>
           <p className="text-muted-foreground mb-6 text-black">Vui lòng quay lại trang kịch bản để tạo kịch bản trước</p>
           <Link href="/script">
-            <Button className="text-black bg-white">Quay lại trang kịch bản</Button>
+            <Button className="text-white bg-purple-600 hover:bg-purple-700">
+              Quay lại trang kịch bản
+            </Button>
           </Link>
         </div>
       </div>
