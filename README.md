@@ -10,8 +10,6 @@
 
 **A full-stack web application for creating AI-powered short videos with modern React ecosystem**
 
-[🚀 Live Demo](#) • [📖 Documentation](#documentation) • [⚡ Quick Start](#installation) • [💡 Features](#key-features)
-
 </div>
 
 ---
