@@ -25,8 +25,6 @@
 
 **AI Short Video Creator** is a comprehensive full-stack application that leverages cutting-edge AI technologies to automatically generate, edit, and manage short-form videos. This backend service powers an intelligent video creation pipeline that transforms simple text prompts into professional-quality videos with AI-generated scripts, voiceovers, and visual content.
 
-**🔗 Frontend Repository:** [AIShortVideoCreator-client-v2](https://github.com/pqkkkkk/AIShortVideoCreator-client-v2)
-
 ## ✨ Key Features
 
 ### 🤖 **AI-Powered Content Generation**
